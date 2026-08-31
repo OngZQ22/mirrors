@@ -65,7 +65,7 @@
   #nameGo{font-style:italic;font-size:13px;letter-spacing:3px;color:#8fb0c2;cursor:pointer;padding:8px 18px;border:1px solid rgba(150,185,205,.3);border-radius:8px}
   #nameGo:hover{color:#eaf6fc;border-color:rgba(180,215,235,.6)}
   /* archive */
-  #archive{position:fixed;inset:0;z-index:62;display:none;align-items:center;justify-content:center;background:rgba(3,4,9,.92);font-family:Georgia,serif}
+  #archive{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(3,4,9,.96);font-family:Georgia,serif}
   .ar{width:min(660px,94vw);max-height:88vh;overflow:auto;background:#0c0a14;border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:22px 24px}
   .arh{letter-spacing:6px;font-size:13px;color:#ff9ecb;margin-bottom:4px;text-align:center}
   #arCount{text-align:center;font-size:11px;letter-spacing:2px;color:#8f81a0;margin-bottom:16px}
@@ -871,7 +871,7 @@ function drawMiniPulse(cv,key){
       x.beginPath();x.moveTo(pts[i-1][0],pts[i-1][1]);x.lineTo(pts[i][0],pts[i][1]);x.stroke();}
     x.restore();requestAnimationFrame(anim);})();}
 function openArchive(){
-  hushRain(1200);if(musicEl)fadeAudio(musicEl,curMusicBase*PREFS.mv*0.25,1200);
+  hushRain(1200);if(musicEl&&!window._ended)fadeAudio(musicEl,curMusicBase*PREFS.mv*0.25,1200);
   const got=getCollected(),list=document.getElementById('arList'),first=getFirst(),last=(()=>{try{return localStorage.getItem('m_last');}catch(e){return null;}})();
   document.getElementById('arCount').textContent=got.length+' OF 6 HEARTS RECORDED';
   const fh=document.getElementById('arFirst');
@@ -906,10 +906,12 @@ function openArchive(){
       const p=tx.querySelector('.apl');p.textContent='♥ BEATING — CLICK TO STOP';p.style.color='#ff9ecb';};});
   document.getElementById('archive').style.display='flex';}
 document.getElementById('arClose').addEventListener('click',()=>{stopPulseSound();document.getElementById('archive').style.display='none';
+  if(window._ended)return;
   if(rainEl2)fadeAudio(rainEl2,(curRainV2>0?curRainV2*0.22:0.16)*PREFS.rv,1400);
   if(musicEl)fadeAudio(musicEl,curMusicBase*PREFS.mv,1400);});
 document.getElementById('oArch').addEventListener('click',openArchive);
 function theEnd(){const c=document.getElementById('card');c.style.display='none';c.onclick=null;
+  window._ended=true;
   try{localStorage.removeItem('m_save');}catch(e){}stopPulseSound();
   const d=document.createElement('div');
   d.style.cssText='position:fixed;inset:0;background:#020204;z-index:80;display:flex;flex-direction:column;gap:26px;align-items:center;justify-content:center;opacity:0;transition:opacity 2.5s';
