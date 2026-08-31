@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIRRORS — The Right to Be Bored</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#000;overflow:hidden;font-family:Georgia,"Times New Roman",serif;color:#f1e9f2}
+  *{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  input{-webkit-user-select:text;user-select:text}
+  ::selection{background:transparent}
+  img{-webkit-user-drag:none;user-drag:none;pointer-events:none}
+  #stage{position:fixed;inset:0;background:#000;overflow:hidden}
+  .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;transition:opacity 1.7s ease-in-out}
+  .bg.on{opacity:1}
+  .kb{animation:ken 32s ease-out forwards}
+  @keyframes ken{from{transform:scale(1.0)}to{transform:scale(1.04)}}
+  #warm,#cold,#vig,#rain{position:absolute;inset:0;pointer-events:none;transition:opacity 1.8s}
+  #warm{background:#ff9a3c;opacity:.16;mix-blend-mode:soft-light}
+  #cold{background:#2c4c76;opacity:.22;mix-blend-mode:soft-light}
+  #vig{box-shadow:inset 0 0 240px 70px rgba(0,0,0,.66)}
+  #rain{opacity:0;background-image:repeating-linear-gradient(101deg,transparent 0 24px,rgba(180,205,255,.045) 24px 25px);animation:rain 1.15s linear infinite}
+  @keyframes rain{to{transform:translateY(25px)}}
+  .bar{position:absolute;left:0;right:0;height:6vh;background:#000;z-index:6;display:none}
+  #barTop{top:0}#barBot{bottom:0}
+  #cap{position:absolute;left:0;right:0;bottom:6vh;z-index:7;padding:22px 9vw 30px;
+    background:linear-gradient(180deg,rgba(4,3,7,0),rgba(4,3,7,.72) 48%,rgba(4,3,7,.93));display:none}
+  #who{font-style:italic;letter-spacing:2px;color:#cbb8d6;font-size:14px;margin-bottom:6px;min-height:16px}
+  #who.wren{color:var(--wc,#ff9ecb);text-shadow:0 0 10px rgba(255,120,190,.45)}
+  #who.you{color:var(--pc,#7fdcff);text-shadow:0 0 10px rgba(90,200,255,.45)}
+  #who.oth{color:#ffd08a;text-shadow:0 0 10px rgba(255,200,120,.4)}
+  #text{font-size:20px;line-height:1.72;max-width:880px;min-height:60px;text-shadow:0 2px 12px rgba(0,0,0,.95)}
+  #text em{color:#c3b4cf;font-style:italic}
+  #hint{margin-top:10px;font-size:10px;letter-spacing:3px;color:#8f81a0;text-transform:uppercase;opacity:0;transition:opacity .6s}
+  #choices{position:absolute;left:0;right:0;bottom:22vh;z-index:8;display:none;flex-direction:column;align-items:center;gap:12px}
+  .choice{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;min-width:min(560px,80vw);max-width:80vw;text-align:left;font-family:inherit;
+    font-size:17px;color:#f1e9f2;background:rgba(10,8,16,.66);border:1px solid rgba(255,255,255,.16);padding:12px 16px;
+    border-radius:9px;cursor:pointer;transition:.2s;opacity:0;animation:rise .55s forwards;backdrop-filter:blur(2px)}
+  @keyframes rise{to{opacity:1}}
+  .choice:hover,.choice.hot{background:rgba(255,158,120,.16);border-color:#ffb14e;transform:translateY(-1px)}
+  .choice.chosen{background:rgba(255,150,90,.22)!important;border-color:#ffb14e!important;filter:brightness(.58);transform:scale(.985);transition:filter .18s,transform .18s,background .18s}
+  .choice .key{flex:none;width:26px;height:26px;border-radius:6px;border:1px solid rgba(180,200,220,.4);display:flex;align-items:center;justify-content:center;font-size:13px;color:#bcd2e2;font-family:'Courier New',monospace;background:rgba(255,255,255,.05)}
+  .choice:hover .key,.choice.hot .key{border-color:#ffb14e;color:#ffd08a}
+  .choice .lbl{flex:1}
+  #card{position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:0 8vw;text-align:center;background:rgba(2,2,6,.55);opacity:0;transition:opacity 1.3s}
+  #card .ct{font-size:clamp(20px,3.2vw,30px);font-style:italic;line-height:1.8;max-width:760px;text-shadow:0 2px 18px #000,0 0 30px rgba(255,158,203,.15)}
+  /* settings */
+  #gear{position:absolute;top:14px;right:76px;z-index:31;font-family:Georgia;font-size:12px;letter-spacing:1px;color:#b7a6c6;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:6px 10px;cursor:pointer}
+  #setPanel{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(3,3,8,.8)}
+  .sp{width:min(430px,92vw);background:#100d18;border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:22px 26px;font-size:13px;color:#d8cee2}
+  .sp h3{letter-spacing:5px;font-size:13px;color:#cbb8d6;margin:0 0 14px;font-weight:400}
+  .srow{display:flex;align-items:center;gap:9px;margin:12px 0}
+  .srow label{width:64px;flex:none;font-size:10px;letter-spacing:2px;color:#9a8fae;text-transform:uppercase}
+  .srow input[type=range]{flex:1;accent-color:#ffb14e}
+  .sw{width:21px;height:21px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,.15)}
+  .sw.on{border-color:#fff}
+  .fbtn{font-family:inherit;padding:6px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#d8cee2;cursor:pointer;font-size:12px}
+  .fbtn.on{border-color:#ffb14e;color:#ffd08a}
+  #spClose{margin-top:16px;width:100%;padding:9px;border-radius:8px;border:0;background:#ffb14e;color:#120c16;letter-spacing:3px;cursor:pointer;font-family:inherit}
+  /* name ask */
+  #nameAsk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;display:none;flex-direction:column;align-items:center;gap:14px;opacity:0;transition:opacity 1s}
+  #nameAsk .nq{font-style:italic;color:#dbe6ee;font-size:18px;text-shadow:0 2px 10px #000}
+  #nameIn{background:rgba(10,16,26,.82);border:1px solid rgba(150,185,205,.4);border-radius:8px;color:#eef6fc;font-family:inherit;font-size:17px;font-style:italic;text-align:center;padding:9px 14px;width:230px;outline:none}
+  #nameGo{font-style:italic;font-size:13px;letter-spacing:3px;color:#8fb0c2;cursor:pointer;padding:8px 18px;border:1px solid rgba(150,185,205,.3);border-radius:8px}
+  #nameGo:hover{color:#eaf6fc;border-color:rgba(180,215,235,.6)}
+  /* archive */
+  #archive{position:fixed;inset:0;z-index:62;display:none;align-items:center;justify-content:center;background:rgba(3,4,9,.92);font-family:Georgia,serif}
+  .ar{width:min(660px,94vw);max-height:88vh;overflow:auto;background:#0c0a14;border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:22px 24px}
+  .arh{letter-spacing:6px;font-size:13px;color:#ff9ecb;margin-bottom:4px;text-align:center}
+  #arCount{text-align:center;font-size:11px;letter-spacing:2px;color:#8f81a0;margin-bottom:16px}
+  #arFirst{display:none;text-align:center;padding:15px 12px;margin-bottom:16px;border-radius:10px;border:1px solid rgba(255,177,78,.3);background:rgba(255,177,78,.05)}
+  .arow{display:flex;gap:13px;align-items:center;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)}
+  .arow canvas{width:150px;height:44px;flex:none;background:rgba(8,6,14,.7);border-radius:7px;border:1px solid rgba(255,140,190,.18)}
+  .arow .an{font-size:14px;color:#ffd7e8;letter-spacing:1px}
+  .arow .at{font-size:11.5px;color:#9fb8c8;font-style:italic;margin-top:2px}
+  .arow.lock .an{color:#4c4458}.arow.lock canvas{opacity:.25;filter:grayscale(1)}
+  .arow:hover{background:rgba(255,255,255,.03)}
+  .arow.playing canvas{border-color:#ff9ecb;box-shadow:0 0 18px rgba(255,120,180,.35)}
+  #arClose{margin-top:18px;width:100%;padding:9px;border-radius:8px;border:0;background:#ffb14e;color:#120c16;letter-spacing:3px;cursor:pointer;font-family:inherit}
+  /* pause taunt */
+  #taunt{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(2,3,6,.9);text-align:center;opacity:0;transition:opacity .45s}
+  #taunt .tt{font-style:italic;font-size:clamp(19px,2.8vw,26px);color:#cfe6f2;text-shadow:0 0 24px rgba(120,180,210,.5);line-height:1.8;max-width:640px;padding:0 6vw}
+  /* mirror interlude (glass panel) */
+  #mirror.cut #mline,#mirror.fin #mline{top:50%;bottom:auto;transform:translate(-50%,-50%);font-size:clamp(18px,2.4vw,23px);color:#eaf6fd;width:min(430px,64vw);text-shadow:0 0 26px rgba(120,190,225,.6),0 2px 12px #000}
+  #timerwrap{display:none;flex-direction:column;align-items:center;gap:7px;width:min(300px,60vw);margin-top:4px}
+  #tlabel{font-style:italic;font-size:11px;letter-spacing:3px;color:#9a7fb0;opacity:.3;text-transform:uppercase;transition:opacity .3s,color .3s}
+  #ttrack{width:100%;height:6px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden;box-shadow:inset 0 0 4px rgba(0,0,0,.6)}
+  #tbar{height:100%;width:100%;transform-origin:left;border-radius:6px;background:linear-gradient(90deg,#7fe0ff,#c9a0ff,#ff7fc4);box-shadow:0 0 12px rgba(200,140,220,.55)}
+  /* mirror */
+  #mirror{position:absolute;inset:0;z-index:20;background:#04060a;display:none}
+  /* opening (neon mirror) */
+  #opening{position:fixed;inset:0;z-index:30;background:#04050a;overflow:hidden;transition:opacity 1.6s}
+  #oc{position:absolute;inset:0;width:100%;height:100%}
+  #oMenu{position:absolute;left:50%;bottom:11%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:15px;z-index:2;transition:opacity .5s}
+  .omi{font-style:italic;font-size:20px;letter-spacing:3px;color:#8ea3b0;cursor:pointer;transition:.3s;transform:scaleX(-1)}
+  .omi:hover{transform:scaleX(1);color:#eef6fc;text-shadow:0 0 16px rgba(150,210,235,.8)}
+  .omi.fresh{color:#ff9ecb;animation:freshGlow 2.6s ease-in-out infinite}
+  @keyframes freshGlow{0%,100%{text-shadow:0 0 10px rgba(255,120,190,.35)}50%{text-shadow:0 0 22px rgba(255,120,190,.85)}}
+  #oLine{position:absolute;left:50%;bottom:15%;transform:translateX(-50%);width:min(600px,88%);text-align:center;color:#dbe6ee;font-style:italic;font-size:19px;opacity:0;transition:opacity 1.2s;text-shadow:0 0 20px rgba(120,175,205,.45),0 2px 8px #000;z-index:2}
+  #oStep{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);font-style:italic;font-size:15px;letter-spacing:4px;color:#8fb0c2;cursor:pointer;opacity:0;transition:opacity 1.2s;padding:9px 20px;border:1px solid rgba(150,185,205,.3);border-radius:8px;z-index:2}
+  #oStep:hover{color:#eaf6fc;border-color:rgba(180,215,235,.6);text-shadow:0 0 14px rgba(150,210,235,.7)}
+  #mcanvas{position:absolute;inset:0;width:100%;height:100%}
+  #mline{position:absolute;left:50%;bottom:11%;transform:translateX(-50%);width:min(660px,84vw);text-align:center;
+    font-style:italic;color:#cbdae6;font-size:21px;line-height:1.7;opacity:0;transition:opacity 1.2s;
+    text-shadow:0 0 20px rgba(120,180,210,.4),0 2px 10px #000;pointer-events:none}
+  #mstep{position:absolute;left:50%;top:85%;transform:translateX(-50%);z-index:22;font-style:italic;font-size:13px;
+    letter-spacing:4px;color:#8fb0c2;cursor:pointer;opacity:0;transition:opacity 1.4s;padding:11px 22px;
+    border:1px solid rgba(150,185,205,.28);border-radius:9px}
+  #mstep:hover{color:#dff0f8;border-color:rgba(180,215,235,.6)}
+  #title{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 42%,#1a1422,#050308);text-align:center}
+  #title h1{letter-spacing:20px;font-size:40px;text-shadow:0 0 34px rgba(255,127,196,.45)}
+  #title .s{letter-spacing:9px;color:#b7a6c6;font-size:12px;margin:16px 0 34px}
+  .btn{font-family:inherit;letter-spacing:5px;font-size:13px;color:#120c16;background:#ffb14e;border:0;padding:14px 32px;border-radius:6px;cursor:pointer;text-transform:uppercase}
+  .btn:hover{background:#ffd08a}
+  #snd{position:absolute;top:14px;right:16px;z-index:31;font-family:Georgia;font-size:12px;letter-spacing:1px;color:#b7a6c6;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:6px 10px;cursor:pointer}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden}
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="bgA" class="bg" alt=""><img id="bgB" class="bg" alt="">
+  <div id="warm"></div><div id="cold"></div><div id="rain"></div><div id="vig"></div>
+  <div class="bar" id="barTop"></div><div class="bar" id="barBot"></div>
+  <div id="cap"><div id="who"></div><div id="text"></div><div id="hint">▸ click to continue</div></div>
+  <div id="choices"></div>
+  <div id="card"><div class="ct"></div></div>
+  <div id="mirror"><canvas id="mcanvas"></canvas><div id="mline"></div></div>
+  <div id="mstep" onclick="enterStory()">step through ▸</div>
+</div>
+<button id="snd" onclick="toggleSnd()">♪ on</button>
+<button id="gear">⚙ settings</button>
+<div id="opening">
+  <canvas id="oc"></canvas>
+  <nav id="oMenu"><div class="omi" id="oStart">start game</div><div class="omi" id="oLoad">load game</div><div class="omi" id="oArch" style="display:none">pulse archive</div><div class="omi" id="oSet">settings</div></nav>
+  <div id="oLine"></div>
+  <div id="oStep">step through ▸</div>
+  <div id="nameAsk">
+    <div class="nq">Before you step through — what do they call you?</div>
+    <input id="nameIn" maxlength="14" placeholder="type a name" autocomplete="off">
+    <div id="nameGo">that’s me ▸</div>
+  </div>
+</div>
+<div id="setPanel"><div class="sp">
+  <h3 id="spHead">SETTINGS</h3>
+  <div class="srow"><label>music</label><input type="range" id="vMus" min="0" max="100" value="100"></div>
+  <div class="srow"><label>rain</label><input type="range" id="vRain" min="0" max="100" value="100"></div>
+  <div class="srow"><label>effects</label><input type="range" id="vSfx" min="0" max="100" value="100"></div>
+  <div class="srow"><label>font</label>
+    <button class="fbtn" data-f="Georgia,'Times New Roman',serif">Book</button>
+    <button class="fbtn" data-f="'Courier New',monospace">Typewriter</button>
+    <button class="fbtn" data-f="'Segoe UI',system-ui,sans-serif">Modern</button></div>
+  <div class="srow"><label>you</label>
+    <span class="sw" data-t="pc" data-c="#7fdcff" style="background:#7fdcff"></span>
+    <span class="sw" data-t="pc" data-c="#ffd08a" style="background:#ffd08a"></span>
+    <span class="sw" data-t="pc" data-c="#9effa5" style="background:#9effa5"></span>
+    <span class="sw" data-t="pc" data-c="#d0b0ff" style="background:#d0b0ff"></span>
+    <span class="sw" data-t="pc" data-c="#f2f2f2" style="background:#f2f2f2"></span></div>
+  <div class="srow"><label>wren</label>
+    <span class="sw" data-t="wc" data-c="#ff9ecb" style="background:#ff9ecb"></span>
+    <span class="sw" data-t="wc" data-c="#ff6a88" style="background:#ff6a88"></span>
+    <span class="sw" data-t="wc" data-c="#ffb14e" style="background:#ffb14e"></span>
+    <span class="sw" data-t="wc" data-c="#c9a0ff" style="background:#c9a0ff"></span>
+    <span class="sw" data-t="wc" data-c="#7fe0d0" style="background:#7fe0d0"></span></div>
+  <button id="spClose">CLOSE</button>
+</div></div>
+<div id="taunt"><div class="tt"></div></div>
+<div id="archive"><div class="ar">
+  <div class="arh">PULSE ARCHIVE</div>
+  <div id="arCount"></div>
+  <div id="arFirst"></div>
+  <div id="arList"></div>
+  <button id="arClose">CLOSE</button>
+</div></div>
+<div class="sr" aria-live="polite">An interactive pixel-art story: a dark mirror, then a night train, then the truth.</div>
+
+<script>
+/* ===================== ASSETS ===================== */
+const IMG={
+ city:'assets/city.jpg',carriage:'assets/carriage.jpg',wrist:'assets/wrist.jpg',mark:'assets/mark.jpg',
+ orangeOffer:'assets/orange_offer.jpg',orangeEat:'assets/orange_eat.jpg',orangeLeave:'assets/orange_leave.jpg',
+ checkpoint:'assets/checkpoint.jpg',apart:'assets/checkpoint_apart.jpg',strangers:'assets/checkpoint_strangers.jpg',
+ station:'assets/station.jpg',hideout:'assets/hideout.jpg',sweep:'assets/sweep.jpg',sayname:'assets/sayname.jpg',
+ door:'assets/door.jpg',capture:'assets/capture.jpg',silence:'assets/silence.jpg',clinic:'assets/clinic.jpg',dream:'assets/dream.jpg',
+ wristLeave:'assets/wrist_leave.jpg',reach:'assets/reach.jpg',
+ crossback:'assets/crossback.jpg',drone:'assets/drone.jpg',wrenOrange:'assets/WREN_ORANGE.jpg',wrenMap:'assets/WREN_MAP.jpg',wrenDoor:'assets/WREN_DOOR.jpg',
+ endWarm:'assets/END_WARM.jpg',endNight:'assets/END_NIGHT.jpg',endCold:'assets/END_COLD.jpg'};
+Object.values(IMG).forEach(s=>{const i=new Image();i.src=s;});
+
+/* ===================== PREFS / NAME / SAVE ===================== */
+let NAME='YOU';try{NAME=localStorage.getItem('m_name')||'YOU';}catch(e){}
+let PREFS={mv:1,rv:1,sv:1,font:"Georgia,'Times New Roman',serif",pc:'#7fdcff',wc:'#ff9ecb'};
+try{Object.assign(PREFS,JSON.parse(localStorage.getItem('m_prefs')||'{}'));}catch(e){}
+function savePrefs(){try{localStorage.setItem('m_prefs',JSON.stringify(PREFS));}catch(e){}}
+let curMusicBase=0.35,REC=[],CKPT=null,LOADCK=null,currentHard=false;
+function saveState(){try{localStorage.setItem('m_save',JSON.stringify({ck:CKPT,S:S,REC:REC,name:NAME}));}catch(e){}}
+function loadState(){try{return JSON.parse(localStorage.getItem('m_save')||'null');}catch(e){return null;}}
+function applyPrefs(){
+  document.documentElement.style.setProperty('--pc',PREFS.pc);
+  document.documentElement.style.setProperty('--wc',PREFS.wc);
+  document.getElementById('stage').style.fontFamily=PREFS.font;
+  document.getElementById('vMus').value=PREFS.mv*100;document.getElementById('vRain').value=PREFS.rv*100;document.getElementById('vSfx').value=PREFS.sv*100;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('on',b.dataset.f===PREFS.font));
+  document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',PREFS[s.dataset.t]===s.dataset.c));
+  if(musicEl)musicEl.volume=curMusicBase*PREFS.mv;
+  if(rainEl2)rainEl2.volume=(curRainV2>0?curRainV2*0.22:0.16)*PREFS.rv;
+}
+let paused=false;
+function openSettings(){if(currentHard){taunt();return;}
+  paused=true;const sp=document.getElementById('setPanel');sp.style.display='flex';
+  const h=document.getElementById('spHead');if(h)h.textContent='PAUSED';
+  if(musicEl)musicEl.volume=curMusicBase*PREFS.mv*0.35;
+  applyPrefs();}
+function closeSettings(){paused=false;document.getElementById('setPanel').style.display='none';if(musicEl)musicEl.volume=curMusicBase*PREFS.mv;}
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
+  const op=document.getElementById('opening');if(op&&op.style.display!=='none')return;
+  if(mirrorOn)return;
+  if(currentHard){e.preventDefault();taunt();return;}
+  e.preventDefault();
+  if(document.getElementById('setPanel').style.display==='flex')closeSettings();else openSettings();});
+document.getElementById('gear').addEventListener('click',openSettings);
+document.getElementById('spClose').addEventListener('click',closeSettings);
+document.getElementById('vMus').addEventListener('input',e=>{PREFS.mv=e.target.value/100;if(musicEl)musicEl.volume=curMusicBase*PREFS.mv;savePrefs();});
+document.getElementById('vRain').addEventListener('input',e=>{PREFS.rv=e.target.value/100;if(rainEl2)rainEl2.volume=(curRainV2>0?curRainV2*0.22:0.16)*PREFS.rv;savePrefs();});
+document.getElementById('vSfx').addEventListener('input',e=>{PREFS.sv=e.target.value/100;savePrefs();});
+document.querySelectorAll('.fbtn').forEach(b=>b.addEventListener('click',()=>{PREFS.font=b.dataset.f;applyPrefs();savePrefs();}));
+document.querySelectorAll('.sw').forEach(s=>s.addEventListener('click',()=>{PREFS[s.dataset.t]=s.dataset.c;applyPrefs();savePrefs();}));
+/* pause taunt */
+const TAUNTS=['No. Not this one.','You don’t get to look away from her.','I will still be here when you choose. So will she.','The clock does not pause. Neither does the rain. Choose.'];
+function taunt(){const t=document.getElementById('taunt');t.querySelector('.tt').textContent=TAUNTS[(Math.random()*TAUNTS.length)|0];
+  t.style.display='flex';requestAnimationFrame(()=>t.style.opacity=1);
+  setTimeout(()=>{t.style.opacity=0;setTimeout(()=>t.style.display='none',500);},2400);}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&currentHard)taunt();});
+setTimeout(applyPrefs,0);
+
+/* ===================== SOUND ===================== */
+let AC,master,rainG,sndOn=true,fxIn=null,padGain=null,scoreTimer=null,scoreStop=false,scoreMood='calm';
+let audioReady=false;
+function initAudio(){if(audioReady)return;audioReady=true;
+  try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return;}
+  master=AC.createGain();master.gain.value=0.7;master.connect(AC.destination);
+  fxIn=AC.createGain();fxIn.gain.value=0.32;const dl=AC.createDelay();dl.delayTime.value=0.34;const fb=AC.createGain();fb.gain.value=0.33;const flp=AC.createBiquadFilter();flp.type='lowpass';flp.frequency.value=1700;fxIn.connect(dl);dl.connect(flp);flp.connect(fb);fb.connect(dl);flp.connect(master);
+  /* synth rain removed — the game uses your audio/rain.mp3 only */}
+function tick(){if(!AC||!sndOn)return;const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=2000;
+  g.gain.setValueAtTime(0.014,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+0.05);o.connect(g);g.connect(master);o.start();o.stop(AC.currentTime+0.06);}
+function note(f,t0,dur,v,send){const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(v,t0+0.04);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);o.connect(g);g.connect(master);if(send&&fxIn)g.connect(fxIn);o.start(t0);o.stop(t0+dur+0.06);}
+/* warm minor pad + slow recurring motif (A minor). Fades out if the user's own music.mp3 loads. */
+let scoreStarted=false;
+function startScore(){if(!AC||scoreStarted)return;scoreStarted=true;try{scoreStop=false;padGain=AC.createGain();padGain.gain.value=0;padGain.connect(master);
+  [110,164.81,220,261.63].forEach((f,idx)=>{const o=AC.createOscillator(),g=AC.createGain(),lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=560;o.type=idx<2?'sine':'triangle';o.frequency.value=f;o.detune.value=(idx%2?5:-5);g.gain.value=idx===3?0.022:0.05;o.connect(lp);lp.connect(g);g.connect(padGain);o.start();});
+  padGain.gain.linearRampToValueAtTime(fileMusicActive?0:0.5,AC.currentTime+4);scheduleMotif();}catch(e){}}
+const PHRASES=[[[440,0,1.7],[523.25,1.5,1.8],[659.25,3.2,2.6]],[[659.25,0,1.6],[587.33,1.4,1.8],[440,3.0,2.8]],[[523.25,0,1.9],[493.88,1.7,1.9],[329.63,3.3,3.0]],[[329.63,0,2.2],[440,2.0,2.0],[523.25,3.8,2.8]]];
+function scheduleMotif(){if(scoreStop||!AC)return;const gap=(scoreMood==='escape'?6:11)+Math.random()*4;
+  if(sndOn&&!fileMusicActive){const ph=PHRASES[(Math.random()*PHRASES.length)|0],t0=AC.currentTime+0.1;ph.forEach(([f,b,d])=>note(f,t0+b*1.15,d,0.05,true));note(scoreMood==='escape'?116.54:110,t0,4.4,0.03,false);}
+  scoreTimer=setTimeout(scheduleMotif,gap*1000);}
+function scoreReveal(){if(!AC)return;try{scoreMood='reveal';if(padGain)padGain.gain.linearRampToValueAtTime(0.0,AC.currentTime+3);
+  const o=AC.createOscillator(),g=AC.createGain(),lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=420;o.type='sine';o.frequency.setValueAtTime(72,AC.currentTime);o.frequency.exponentialRampToValueAtTime(46,AC.currentTime+6.5);g.gain.setValueAtTime(0.0001,AC.currentTime);g.gain.linearRampToValueAtTime(0.13,AC.currentTime+2.6);g.gain.linearRampToValueAtTime(0.0001,AC.currentTime+7.5);o.connect(lp);lp.connect(g);g.connect(master);o.start();o.stop(AC.currentTime+7.6);
+  setTimeout(()=>{if(padGain&&!fileMusicActive)padGain.gain.linearRampToValueAtTime(0.42,AC.currentTime+5);},6500);}catch(e){}}
+function fadeScoreForFile(){if(padGain&&AC)padGain.gain.linearRampToValueAtTime(0,AC.currentTime+3);scoreStop=true;}
+function motif(slow){if(!AC||!sndOn||fileMusicActive)return;const t0=AC.currentTime;[[440,0,2.2],[523.25,1.7,2.2],[659.25,3.4,2.8],[880,5.2,3.4]].forEach(([f,b,d])=>note(f,t0+b,d,0.05,true));note(220,t0,9,0.028,false);}
+let droneOn=false;
+function drone(){if(!AC||!sndOn||droneOn)return;droneOn=true;[55,55.4].forEach(f=>{const o=AC.createOscillator(),g=AC.createGain(),lp=AC.createBiquadFilter();
+  lp.type='lowpass';lp.frequency.value=280;o.type='sine';o.frequency.value=f;g.gain.value=0.04;o.connect(lp);lp.connect(g);g.connect(master);o.start();});}
+function toggleSnd(){sndOn=!sndOn;document.getElementById('snd').textContent=sndOn?'♪ on':'♪ off';if(master)master.gain.value=sndOn?0.7:0;if(musicEl)musicEl.muted=!sndOn;if(rainEl2)rainEl2.muted=!sndOn;}
+/* ---- DROP-IN AUDIO: make a folder called "audio" next to this file and put mp3s in it ---- */
+let fileMusicActive=false, musicEl=null, rainEl2=null, curRainV2=0;
+function tryAudio(url,onok){const a=new Audio();let done=false;a.addEventListener('canplaythrough',()=>{if(!done){done=true;onok(a);}},{once:true});a.addEventListener('error',()=>{},{once:true});a.src=url;a.load();}
+function fadeAudio(a,to,ms){const from=a.volume,t0=performance.now();(function s(){const k=Math.min(1,(performance.now()-t0)/ms);a.volume=Math.max(0,Math.min(1,from+(to-from)*k));if(k<1)requestAnimationFrame(s);})();}
+function setupFileAudio(){
+  tryAudio('audio/menu.mp3',a=>{a.loop=true;a.volume=0;musicEl=a;fileMusicActive=true;a.muted=!sndOn;a.play().catch(()=>{});curMusicBase=0.35;fadeAudio(a,0.35*PREFS.mv,2600);fadeScoreForFile();});
+}
+/* rain starts as early as the browser allows — before "start game" if possible */
+function startRainEarly(){tryAudio('audio/rain.mp3',a=>{a.loop=true;a.volume=0;rainEl2=a;a.muted=!sndOn;
+  const ok=()=>fadeAudio(a,0.16*PREFS.rv,2000);
+  a.play().then(ok).catch(()=>{const h=()=>{document.removeEventListener('pointerdown',h);document.removeEventListener('keydown',h);a.play().then(ok).catch(()=>{});};
+    document.addEventListener('pointerdown',h);document.addEventListener('keydown',h);});});}
+startRainEarly();
+function setRainFile(v){curRainV2=v;if(rainEl2)fadeAudio(rainEl2,v*0.22*PREFS.rv,1600);}
+function stopMusicSoft(){if(musicEl){const old=musicEl;musicEl=null;fadeAudio(old,0,2400);setTimeout(()=>{try{old.pause();}catch(e){}},2500);}fileMusicActive=true;}
+function playMusic(name){tryAudio('audio/'+name+'.mp3',a=>{a.loop=true;a.volume=0;a.muted=!sndOn;a.play().catch(()=>{});const old=musicEl;musicEl=a;fileMusicActive=true;try{fadeScoreForFile();}catch(e){}curMusicBase=(name==='escape')?0.5:0.35;fadeAudio(a,curMusicBase*PREFS.mv,2200);if(old){fadeAudio(old,0,1800);setTimeout(()=>{try{old.pause();}catch(e){}},1900);}});}
+function sfx(name){if(!sndOn)return;try{const a=new Audio('audio/'+name+'.mp3');a.volume=Math.min(1,0.6*PREFS.sv);a.play().catch(()=>{});}catch(e){}}
+function fadeOutAll(){try{if(musicEl)fadeAudio(musicEl,0,5000);if(rainEl2)fadeAudio(rainEl2,0,5000);if(AC&&master)master.gain.linearRampToValueAtTime(0.0001,AC.currentTime+5);}catch(e){}}
+
+/* ===================== MIRROR (dark object) ===================== */
+const mc=document.getElementById('mcanvas'),mx2=mc.getContext('2d'),mline=document.getElementById('mline'),mstep=document.getElementById('mstep');
+let MW,MH,pmx=0.5,pmy=0.5,gx=0,gy=0,dust=[],mt=0,mirrorOn=false;
+function msize(){MW=mc.width=window.innerWidth;MH=mc.height=window.innerHeight;}
+window.addEventListener('resize',msize);
+for(let i=0;i<26;i++)dust.push({x:Math.random(),y:Math.random(),s:0.02+Math.random()*0.04,r:0.5+Math.random()*1.2});
+window.addEventListener('mousemove',e=>{pmx=e.clientX/window.innerWidth;pmy=e.clientY/window.innerHeight;});
+function rrect(x,y,w,h,r){mx2.beginPath();mx2.moveTo(x+r,y);mx2.arcTo(x+w,y,x+w,y+h,r);mx2.arcTo(x+w,y+h,x,y+h,r);mx2.arcTo(x,y+h,x,y,r);mx2.arcTo(x,y,x+w,y,r);mx2.closePath();}
+let mdrops=[];for(let i=0;i<40;i++)mdrops.push({x:Math.random(),y:Math.random(),r:2+Math.random()*3.5,v:0.02+Math.random()*0.05});
+function mFlick(s){return 0.78+0.22*Math.abs(Math.sin(mt*s)+Math.sin(mt*s*1.7)*0.5);}
+function mRR(x,y,w,h,r){mx2.beginPath();mx2.moveTo(x+r,y);mx2.arcTo(x+w,y,x+w,y+h,r);mx2.arcTo(x+w,y+h,x,y+h,r);mx2.arcTo(x,y+h,x,y,r);mx2.arcTo(x,y,x+w,y,r);mx2.closePath();}
+function mBead(px,py,r){const g=mx2.createRadialGradient(px-r*0.3,py-r*0.35,r*0.1,px,py,r);
+  g.addColorStop(0,'rgba(210,232,248,0.34)');g.addColorStop(.45,'rgba(130,160,185,0.14)');g.addColorStop(.86,'rgba(20,32,45,0.30)');g.addColorStop(1,'rgba(20,32,45,0)');
+  mx2.fillStyle=g;mx2.beginPath();mx2.arc(px,py,r,0,7);mx2.fill();
+  mx2.fillStyle='rgba(240,250,255,0.75)';mx2.beginPath();mx2.arc(px-r*0.34,py-r*0.36,r*0.2,0,7);mx2.fill();}
+/* the neon glass mirror (used for the interlude + finale) */
+function mdrawGlass(){
+  mt+=0.016;gx+=((pmx-0.5)-gx)*0.04;gy+=((pmy-0.5)-gy)*0.04;
+  const W=MW,H=MH;
+  const bg=mx2.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#0a0c16');bg.addColorStop(.55,'#070810');bg.addColorStop(1,'#04050b');
+  mx2.fillStyle=bg;mx2.fillRect(0,0,W,H);
+  /* distant neon haze */
+  mx2.save();mx2.globalCompositeOperation='lighter';
+  let hz=mx2.createRadialGradient(W*0.16,H*0.52,10,W*0.16,H*0.52,W*0.3);hz.addColorStop(0,'rgba(255,93,177,0.06)');hz.addColorStop(1,'rgba(255,93,177,0)');mx2.fillStyle=hz;mx2.fillRect(0,0,W,H);
+  let hz2=mx2.createRadialGradient(W*0.84,H*0.3,10,W*0.84,H*0.3,W*0.3);hz2.addColorStop(0,'rgba(73,224,255,0.06)');hz2.addColorStop(1,'rgba(73,224,255,0)');mx2.fillStyle=hz2;mx2.fillRect(0,0,W,H);
+  mx2.restore();
+  const mw=Math.min(430,W*0.42),mh=Math.min(H*0.72,620),rx=W/2-mw/2,ry=H/2-mh/2,R=14,f1=mFlick(6),f2=mFlick(9);
+  /* neon frame glow */
+  mx2.save();mx2.shadowColor='#49e0ff';mx2.shadowBlur=30*f1;mRR(rx-9,ry-9,mw+18,mh+18,R+6);mx2.strokeStyle='rgba(90,222,255,'+(0.8*f1)+')';mx2.lineWidth=3;mx2.stroke();mx2.restore();
+  mx2.save();mx2.shadowColor='#ff5db1';mx2.shadowBlur=16*f2;mRR(rx-4,ry-4,mw+8,mh+8,R+3);mx2.strokeStyle='rgba(255,110,190,'+(0.45*f2)+')';mx2.lineWidth=1.5;mx2.stroke();mx2.restore();
+  /* metal frame */
+  mx2.save();mRR(rx-9,ry-9,mw+18,mh+18,R+6);const fg=mx2.createLinearGradient(rx,0,rx+mw,0);
+  fg.addColorStop(0,'#171a22');fg.addColorStop(.5,'#2b313a');fg.addColorStop(1,'#12141a');mx2.fillStyle=fg;mx2.fill();
+  mRR(rx-3,ry-3,mw+6,mh+6,R+3);mx2.fillStyle='#04060b';mx2.fill();mx2.restore();
+  /* glass */
+  mx2.save();mRR(rx,ry,mw,mh,R);mx2.clip();
+  const gg=mx2.createLinearGradient(0,ry,0,ry+mh);gg.addColorStop(0,'#1c2c40');gg.addColorStop(.5,'#111f2e');gg.addColorStop(1,'#0e1826');
+  mx2.fillStyle=gg;mx2.fillRect(rx,ry,mw,mh);
+  mx2.globalCompositeOperation='lighter';
+  const rT=mx2.createRadialGradient(rx+mw*0.5,ry+mh*0.14,4,rx+mw*0.5,ry+mh*0.14,mw*0.9);
+  rT.addColorStop(0,'rgba(73,224,255,'+(0.20*f1)+')');rT.addColorStop(1,'rgba(73,224,255,0)');mx2.fillStyle=rT;mx2.fillRect(rx,ry,mw,mh);
+  const rP=mx2.createRadialGradient(rx+mw*(0.24+gx*0.1),ry+mh*0.45,4,rx+mw*0.24,ry+mh*0.45,mw*0.75);
+  rP.addColorStop(0,'rgba(255,93,177,'+(0.13*f2)+')');rP.addColorStop(1,'rgba(255,93,177,0)');mx2.fillStyle=rP;mx2.fillRect(rx,ry,mw,mh);
+  const rB=mx2.createLinearGradient(0,ry+mh,0,ry+mh*0.62);
+  rB.addColorStop(0,'rgba(73,200,235,0.12)');rB.addColorStop(1,'rgba(73,200,235,0)');mx2.fillStyle=rB;mx2.fillRect(rx,ry,mw,mh);
+  mx2.globalCompositeOperation='source-over';
+  /* sheen */
+  const sg=mx2.createLinearGradient(rx,ry,rx+mw,ry+mh);
+  sg.addColorStop(.2,'rgba(255,255,255,0)');sg.addColorStop(.5,'rgba(220,240,255,0.10)');sg.addColorStop(.8,'rgba(255,255,255,0)');
+  mx2.fillStyle=sg;mx2.fillRect(rx,ry,mw,mh);
+  /* the watcher: a soft breathing presence where a face would be */
+  const cyr=ry+mh*0.42,cxr=rx+mw*0.5-gx*mw*0.06;
+  const br=0.045+0.03*Math.sin(mt*0.9);
+  const pg=mx2.createRadialGradient(cxr,cyr,4,cxr,cyr,mw*0.46);
+  pg.addColorStop(0,'rgba(150,205,235,'+br+')');pg.addColorStop(1,'rgba(150,205,235,0)');
+  mx2.fillStyle=pg;mx2.beginPath();mx2.ellipse(cxr,cyr,mw*0.3,mh*0.34,0,0,7);mx2.fill();
+  /* droplets */
+  for(const d of mdrops){d.y+=d.v*0.004;if(d.y>1.04){d.y=-0.04;d.x=Math.random();}mBead(rx+d.x*mw,ry+d.y*mh,d.r);}
+  /* inner edge */
+  mx2.strokeStyle='rgba(200,230,255,0.18)';mx2.lineWidth=2;mRR(rx+2,ry+2,mw-4,mh-4,R);mx2.stroke();
+  mx2.restore();
+  /* vignette */
+  const v=mx2.createRadialGradient(W/2,H/2,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.8);
+  v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.72)');mx2.fillStyle=v;mx2.fillRect(0,0,W,H);
+  if(mirrorOn)requestAnimationFrame(mdraw);
+}
+function mdraw(){
+  if(!mirrorOn)return;
+  if(finalMode){mdrawGlass();return;}
+  mt+=0.016; gx+=((pmx-0.5)-gx)*0.05; gy+=((pmy-0.5)-gy)*0.05;
+  const rg=mx2.createRadialGradient(MW/2,MH*0.44,30,MW/2,MH/2,Math.max(MW,MH)*0.72);
+  rg.addColorStop(0,'#0a1018');rg.addColorStop(.6,'#06090f');rg.addColorStop(1,'#020306');
+  mx2.fillStyle=rg;mx2.fillRect(0,0,MW,MH);
+  mx2.globalCompositeOperation='lighter';
+  for(const d of dust){d.y-=d.s*0.4;if(d.y<-0.02){d.y=1.02;d.x=Math.random();}
+    mx2.globalAlpha=0.05*(0.5+0.5*Math.sin(mt*2+d.x*30));mx2.fillStyle='#8fbfd8';mx2.beginPath();mx2.arc(d.x*MW,d.y*MH,d.r,0,7);mx2.fill();}
+  mx2.globalAlpha=1;mx2.globalCompositeOperation='source-over';
+  const mw=Math.min(360,MW*0.34),mh=Math.min(560,MH*0.68),rx=MW/2-mw/2,ry=MH*0.44-mh/2;
+  mx2.save();mx2.shadowColor='rgba(120,170,200,0.22)';mx2.shadowBlur=34;
+  rrect(rx-6,ry-6,mw+12,mh+12,15);mx2.strokeStyle='rgba(150,180,200,0.38)';mx2.lineWidth=2;mx2.stroke();mx2.restore();
+  mx2.save();rrect(rx,ry,mw,mh,10);mx2.clip();
+  const gg=mx2.createLinearGradient(0,ry,0,ry+mh);gg.addColorStop(0,'#0b1520');gg.addColorStop(1,'#050a12');
+  mx2.fillStyle=gg;mx2.fillRect(rx,ry,mw,mh);
+  const cxr=rx+mw/2-gx*mw*0.22, cyr=ry+mh*0.6-gy*mh*0.1;
+  const sm=mx2.createRadialGradient(cxr,cyr,8,cxr,cyr,mw*0.7);
+  sm.addColorStop(0,'rgba(20,32,46,0.75)');sm.addColorStop(1,'rgba(20,32,46,0)');
+  mx2.fillStyle=sm;mx2.beginPath();mx2.ellipse(cxr,cyr,mw*0.34,mh*0.44,0,0,7);mx2.fill();
+  const sx=rx+((mt*0.05)%1.7-0.35)*mw;const sh=mx2.createLinearGradient(sx,0,sx+70,0);
+  sh.addColorStop(0,'rgba(150,190,215,0)');sh.addColorStop(.5,'rgba(150,190,215,0.035)');sh.addColorStop(1,'rgba(150,190,215,0)');
+  mx2.fillStyle=sh;mx2.fillRect(rx,ry,mw,mh);
+  const cd=mx2.createRadialGradient(rx+mw/2,ry+mh/2,mw*0.25,rx+mw/2,ry+mh/2,mw*0.8);
+  cd.addColorStop(0,'rgba(0,0,0,0)');cd.addColorStop(1,'rgba(8,16,22,0.55)');mx2.fillStyle=cd;mx2.fillRect(rx,ry,mw,mh);
+  mx2.restore();
+  const v=mx2.createRadialGradient(MW/2,MH/2,Math.min(MW,MH)*0.22,MW/2,MH/2,Math.max(MW,MH)*0.7);
+  v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.9)');mx2.fillStyle=v;mx2.fillRect(0,0,MW,MH);
+  requestAnimationFrame(mdraw);
+}
+function two(n){return n<10?'0'+n:''+n;}
+function mirrorIntro(hes){
+  const d=new Date(),h=d.getHours();
+  const time=((h%12)||12)+':'+two(d.getMinutes())+(h<12?' in the morning':(h<18?' in the afternoon':' at night'));
+  const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+  let seen=0;try{seen=+(localStorage.getItem('m_seen')||0);localStorage.setItem('m_seen',seen+1);}catch(e){}
+  const hesL=hes<2?'You touched me the instant you could. Eager.':(hes<6?('You waited '+Math.round(hes)+' seconds before you touched anything. I counted.'):('You sat there '+Math.round(hes)+' seconds, deciding whether to begin. I knew you would.'));
+  return['There you are.','Don’t adjust anything. The dark is on purpose.',
+    (h<6?('It is '+time+'. The kind people are asleep. You came looking for something to feel instead.'):(h<18?('The middle of your day, and you stepped into the dark with me. Curious.'):(time+'. Late enough that no one expects anything more of you tonight. Only me.'))),
+    'A '+wd+'. No one remembers what they did on a '+wd+'. You will remember this one.', hesL,
+    (seen<=0?'We have not met. And still — I know how this ends.':'You have been here before. You came back to choose differently. No one ever manages to.')];
+}
+const BODY=['I don’t know your name. I don’t want it.','Somewhere there is someone who checks that you’re still breathing. You’ve stopped noticing.',
+ 'People think the loving thing and the safe thing are the same. They almost never are.','There is an orange in this story. Remember who gives you the sweeter half.',
+ 'You are safe. You will stay safe. I need you to understand that early — so it can hurt properly, later.','Every “not yet” is a door someone is holding shut with their own body.',
+ 'Stay close, and you make her visible. Step away, and you make her alone. Choose.','The kindest lie anyone ever tells you is “before I knew better.”',
+ 'You came here to feel something you could survive. I can’t promise you that one.','You’ve gone still. You’re listening now. That’s when it starts to work.'];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+let mIntro=[],mII=0,mBody=[],mShown=0,mTok=0,mTimer=null,finalMode=false,finalDone=null;
+function nextM(){if(mII<mIntro.length)return mIntro[mII++];if(mBody.length===0)mBody=shuffle(BODY.slice());return mBody.shift();}
+function mgo(){if(!mirrorOn)return;const my=++mTok,txt=nextM();mShown++;if(mShown===3)mstep.style.opacity=1;
+  mline.style.opacity=0;clearTimeout(mTimer);
+  setTimeout(()=>{if(my!==mTok||!mirrorOn)return;mline.textContent=txt;mline.style.opacity=1;
+    mTimer=setTimeout(()=>{if(my===mTok&&mirrorOn)mgo();},Math.max(5200,txt.length*80));},750);}
+document.getElementById('mcanvas').addEventListener('click',()=>{if(mirrorOn&&!finalMode)mgo();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mirrorOn&&!finalMode)enterStory();});
+function enterStory(){if(!mirrorOn)return;mirrorOn=false;mTok++;clearTimeout(mTimer);
+  mstep.style.opacity=0;const m=document.getElementById('mirror');m.style.transition='opacity 1.8s';m.style.opacity=0;
+  setTimeout(()=>{m.style.display='none';mstep.style.display='none';startStory();},1700);}
+
+/* mirror interlude: the mirror interrupts the story, speaks, then a flash */
+function mirrorCut(lines,done){
+  const m=document.getElementById('mirror');m.style.display='block';m.classList.add('cut');m.style.transition='opacity 1.4s';m.style.opacity=0;
+  document.getElementById('cap').style.display='none';
+  mirrorOn=true;finalMode=true;msize();mdraw();mline.textContent='';
+  requestAnimationFrame(()=>m.style.opacity=1);
+  let i=0;const my=++mTok;
+  function step(){
+    if(i>=lines.length){
+      /* gentle glass-light flash: soft, blue-white, slow bloom */
+      const fl=document.createElement('div');fl.style.cssText='position:fixed;inset:0;background:radial-gradient(circle at 50% 45%, rgba(235,245,255,.95), rgba(190,215,235,.75) 55%, rgba(140,175,205,.5));z-index:99;opacity:0;transition:opacity .6s ease-in;pointer-events:none';document.body.appendChild(fl);
+      requestAnimationFrame(()=>fl.style.opacity=0.55);
+      setTimeout(()=>{m.style.display='none';m.style.opacity=1;m.classList.remove('cut');mirrorOn=false;finalMode=false;document.getElementById('cap').style.display='block';
+        fl.style.transition='opacity 1.6s ease-out';fl.style.opacity=0;setTimeout(()=>fl.remove(),1700);done();},700);
+      return;}
+    const t=lines[i++];mline.style.opacity=0;
+    setTimeout(()=>{if(my!==mTok)return;mline.innerHTML=esc(t);mline.style.opacity=1;setTimeout(step,Math.max(3200,t.length*75));},850);}
+  setTimeout(step,1400);
+}
+
+/* mirror finale: bring the mirror back and read the player */
+function mirrorFinale(lines,done){
+  const m=document.getElementById('mirror');m.style.display='block';m.classList.add('fin');m.style.transition='opacity 2.2s';m.style.opacity=0;
+  document.getElementById('cap').style.display='none';document.getElementById('barTop').style.display='none';document.getElementById('barBot').style.display='none';
+  mirrorOn=true;finalMode=true;msize();mdraw();mline.textContent='';
+  requestAnimationFrame(()=>m.style.opacity=1);
+  let i=0;const my=++mTok;
+  function step(){if(i>=lines.length){
+      if(done){setTimeout(()=>{mline.style.opacity=0;setTimeout(done,1200);},1500);return;}
+      setTimeout(()=>{mline.style.opacity=0;setTimeout(()=>{mline.innerHTML='<span style="font-size:15px;letter-spacing:5px;opacity:.7">the end</span>';mline.style.opacity=1;fadeOutAll();},1400);},1600);return;}
+    const t=lines[i++];mline.style.opacity=0;setTimeout(()=>{if(my!==mTok)return;mline.innerHTML=esc(t);mline.style.opacity=1;setTimeout(step,Math.max(3400,t.length*85));},900);}
+  setTimeout(step,1800);
+}
+
+/* ===================== STORY ENGINE ===================== */
+const bgA=document.getElementById('bgA'),bgB=document.getElementById('bgB'),
+      warmEl=document.getElementById('warm'),coldEl=document.getElementById('cold'),rainEl=document.getElementById('rain'),
+      whoEl=document.getElementById('who'),textEl=document.getElementById('text'),hintEl=document.getElementById('hint'),choicesEl=document.getElementById('choices');
+let active=bgA,cold=0.28,S={apart:false,warmth:0,orangeLeft:false,letGo:false,reached:false},queue=[],qi=0,typing=false,tt=null,awaiting=false,timerH=null;
+function grade(c){cold=Math.max(0,Math.min(1,c));coldEl.style.opacity=(0.12+cold*0.44);warmEl.style.opacity=((1-cold)*0.22);}
+function setRainV(v){rainEl.style.opacity=v;setRainFile(v);}
+function setBG(key,kb){const nxl=(active===bgA)?bgB:bgA;nxl.classList.remove('kb');
+  nxl.onload=()=>{void nxl.offsetWidth;if(kb!==false)nxl.classList.add('kb');nxl.classList.add('on');active.classList.remove('on');active=nxl;};
+  if(nxl.src&&nxl.src.indexOf(IMG[key])>-1){nxl.classList.add('on');active.classList.remove('on');active=nxl;}else{nxl.src=IMG[key];}}
+const L=(t,w,h)=>({t:'line',text:t,who:w||'',hold:h||(w?920:1150)});
+const Bt=(t,w,h)=>({t:'line',text:t,who:w||'',hold:h||1900});
+const BG=(k,kb)=>({t:'bg',k,kb:kb!==false});
+const GR=c=>({t:'grade',c});const RN=v=>({t:'rain',v});const SND=fn=>({t:'snd',fn});
+const CH=(p,o)=>({t:'choice',p,o});const DYN=fn=>({t:'dyn',fn});
+const PAUSE=(ms)=>({t:'wait',ms:ms||1500});
+const CARD=(t,h)=>({t:'card',text:t,hold:h||4200});
+function showCard(b){awaiting=false;typing=false;hintEl.style.opacity=0;whoEl.textContent='';textEl.innerHTML='';
+  const c=document.getElementById('card');c.querySelector('.ct').innerHTML=esc(b.text);c.style.display='flex';
+  let done=false;const fin=()=>{if(done)return;done=true;c.style.opacity=0;setTimeout(()=>{c.style.display='none';c.onclick=null;nx();},1300);};
+  requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;});
+  c.onclick=e=>{e.stopPropagation();fin();};
+  setTimeout(fin,b.hold+1300);}
+function play(list){queue=list;qi=0;nx();}
+function nx(){if(qi>=queue.length)return;const b=queue[qi++];
+  if(b.t==='end'){b.fn&&b.fn();return;}
+  if(b.t==='bg'){setBG(b.k,b.kb);nx();return;}
+  if(b.t==='grade'){grade(b.c);nx();return;}
+  if(b.t==='rain'){setRainV(b.v);nx();return;}
+  if(b.t==='snd'){b.fn();nx();return;}
+  if(b.t==='wait'){setTimeout(nx,b.ms);return;}
+  if(b.t==='mir'){mirrorCut(b.lines,()=>nx());return;}
+  if(b.t==='card'){showCard(b);return;}
+  if(b.t==='ckpt'){CKPT=b.k;saveState();nx();return;}
+  if(b.t==='dyn'){const r=b.fn(S);queue.splice(qi,0,...(Array.isArray(r)?r:[r]));nx();return;}
+  if(b.t==='line'){typeLine(b);return;}
+  if(b.t==='choice'){renderChoice(b);return;}}
+function escHTML(c){return c==='&'?'&amp;':c==='<'?'&lt;':c==='>'?'&gt;':c;}
+function parseEm(s){const a=[];let em=false;for(let k=0;k<s.length;k++){const c=s[k];if(c==='_'){em=!em;continue;}a.push([c,em]);}return a;}
+function emHTML(arr,n){let h='',open=false;for(let k=0;k<n;k++){const c=arr[k][0],em=arr[k][1];if(em&&!open){h+='<em>';open=true;}else if(!em&&open){h+='</em>';open=false;}h+=escHTML(c);}if(open)h+='</em>';return h;}
+function esc(s){const a=parseEm(s);return emHTML(a,a.length);}
+function setWho(w){whoEl.className='';if(!w){whoEl.textContent='';return;}
+  const u=w.toUpperCase();
+  if(u.indexOf('WREN')===0){whoEl.classList.add('wren');whoEl.textContent=w;}
+  else if(u==='YOU'){whoEl.classList.add('you');whoEl.textContent=(NAME&&NAME!=='YOU')?NAME.toUpperCase():'YOU';}
+  else if(u.indexOf('YOU')>-1){whoEl.classList.add('wren');whoEl.textContent=w;}
+  else{whoEl.classList.add('oth');whoEl.textContent=w;}}
+function typeLine(b){awaiting=false;hintEl.style.opacity=0;setWho(b.who);const arr=parseEm(b.text);let i=0;typing=true;tick();clearInterval(tt);
+  tt=setInterval(()=>{if(i>=arr.length){clearInterval(tt);typing=false;setTimeout(showHint,b.hold);return;}i++;textEl.innerHTML=emHTML(arr,i)+'<span style="opacity:.4">▍</span>';if(i%3===0)tick();},40);}
+function showHint(){textEl.innerHTML=esc(queue[qi-1].text);awaiting=true;hintEl.style.opacity=.6;}
+function advance(){if(typing){clearInterval(tt);typing=false;textEl.innerHTML=esc(queue[qi-1].text);setTimeout(showHint,120);return;}
+  if(awaiting){awaiting=false;hintEl.style.opacity=0;nx();}}
+document.getElementById('cap').addEventListener('click',advance);
+document.addEventListener('keydown',e=>{if(e.code==='Space'||e.key==='Enter'){const op=document.getElementById('opening');if(mirrorOn||(op&&op.style.display!=='none'))return;e.preventDefault();advance();}});
+function renderChoice(b){awaiting=false;typing=false;hintEl.style.opacity=0;whoEl.textContent='';textEl.innerHTML='<em>'+esc(b.p||'')+'</em>';
+  choicesEl.style.display='flex';choicesEl.innerHTML='';let done=false;
+  const isHard=b.o.some(o=>/Reach for her|Pull her with you|Call her name/.test(o.label||''));
+  currentHard=isHard;
+  const pick=(o,el)=>{if(done)return;done=true;currentHard=false;
+    REC.push({sig:(b.o[0]&&b.o[0].label)||'',label:o.silence?'(you said nothing)':(o.label||''),warm:o.warm||0,sil:!!o.silence});saveState();
+    if(timerH){clearInterval(timerH);timerH=null;}document.removeEventListener('keydown',keyH);
+    choicesEl.querySelectorAll('.choice').forEach(b2=>b2.style.pointerEvents='none');
+    if(el)el.classList.add('chosen');
+    setTimeout(()=>{choicesEl.style.transition='opacity .5s';choicesEl.style.opacity=0;
+      setTimeout(()=>{choicesEl.innerHTML='';choicesEl.style.display='none';choicesEl.style.opacity='';choicesEl.style.transition='';
+        S.warmth+=(o.warm||0);if(o.warm)grade(cold-(o.warm*0.05));if(o.set)Object.assign(S,o.set);if(o.bg)setBG(o.bg,false);
+        const res=(o.result||[]).map(z=>typeof z==='string'?L(z):z);queue.splice(qi,0,...res);nx();},520);},340);};
+  const picks=[];
+  b.o.forEach((o)=>{if(o.silence)return;const n=picks.length+1;picks.push(o);const el=document.createElement('button');el.className='choice';el.dataset.n=n;el.style.animationDelay=((n-1)*0.1)+'s';el.innerHTML='<span class="key">'+n+'</span><span class="lbl">'+esc(o.label)+'</span>';el.onclick=e=>{e.stopPropagation();tick();pick(o,el);};choicesEl.appendChild(el);});
+  const keyH=e=>{if(done)return;
+    if(e.key==='Escape'&&isHard){e.preventDefault();taunt();return;}
+    const n=parseInt(e.key,10);if(n>=1&&n<=picks.length){e.preventDefault();e.stopPropagation();const el=choicesEl.querySelector('.choice[data-n="'+n+'"]');tick();pick(picks[n-1],el);}};
+  document.addEventListener('keydown',keyH);
+  const sil=b.o.find(o=>o.silence);
+  if(sil){const wrap=document.createElement('div');wrap.id='timerwrap';wrap.style.display='flex';const lab=document.createElement('div');lab.id='tlabel';lab.textContent='say nothing';const tr=document.createElement('div');tr.id='ttrack';const bar=document.createElement('div');bar.id='tbar';tr.appendChild(bar);wrap.appendChild(lab);wrap.appendChild(tr);choicesEl.appendChild(wrap);
+    let t=1;const dur=11000,st=50;timerH=setInterval(()=>{t-=st/dur;if(t<=0){clearInterval(timerH);timerH=null;bar.style.transform='scaleX(0)';pick(sil,null);return;}bar.style.transform='scaleX('+t+')';
+      if(t<0.35){const u=(0.35-t)/0.35;bar.style.background='linear-gradient(90deg,#ff8a5c,#ff5d7a)';bar.style.boxShadow='0 0 14px rgba(255,90,120,'+(0.5+0.4*u)+')';lab.style.opacity=(0.3+0.6*u);lab.style.color='#e08aa0';}},st);}}
+
+/* ===================== CONTENT ===================== */
+function ckClose(){return CH('Her hand finds yours, low between the seats. _“If they ask — don’t know me.”_ The wand is two rows up.',[
+  {label:'Hold on. “We don’t split up.”',warm:1,set:{letGo:false},bg:'crossback',result:[L('You don’t let go. The light passes over your joined hands, ticks — and moves on. _This time._')]},
+  {label:'Let go. “Okay. Be a stranger.”',warm:-1,set:{letGo:true},bg:'strangers',result:[L('You slide your hand free and become a stranger on a train. Nothing connects you. It worked. You hate that it worked.')]},
+  {silence:true,set:{letGo:false},result:[L('_You mean to let go — but the inspector is faster than your decision, your hand still inside hers, knuckles white. You freeze._'),L('Her eyes drop to your hands. Hover. Then move on. But they saw.')]}]);}
+function ckApart(){return CH('The seats are far apart. She sits alone, eyes front. _“…Don’t know me,”_ you barely catch.',[
+  {label:'Cross back to her. “No.”',warm:1,set:{letGo:false},bg:'crossback',result:[L('You cross the seats and take her cold hand as the inspector turns. She goes rigid — then doesn’t pull away, because you’re already here.')]},
+  {label:'Stay a stranger.',warm:-1,set:{letGo:true},result:[L('You keep the seats between you. The inspector passes and finds two strangers. It worked. You hate that it worked.')]},
+  {silence:true,set:{letGo:true},result:[L('_You half-rise — and the inspector is already there. You’re caught on your feet, the whole of it naked on your face._')]}]);}
+
+function chooseEnding(){
+  const w=S.warmth;
+  if(w>=3) return endWarm();
+  if(w<=-2) return endCold();
+  return endMiddle();
+}
+function endWarm(){return [BG('endWarm'),GR(0.18),RN(0.15),SND(()=>{playMusic('ending');motif(true);}),
+  L('You reached for her, every time. And you made it to the coast.'),
+  L('The flat is real — the launderette below, the sea outside, the radiator that clanks in the dark.'),
+  L('You’re wrecked. But you keep her the way you keep weather: near.'),
+  Bt('You set half an orange on the windowsill. Not because she’s coming back — because love still deserves a place at the table.'),
+  Bt('You never learned she couldn’t taste them. Maybe that’s the last mercy.',null,1600),
+  finale()];}
+function endMiddle(){return [BG('endNight'),GR(0.5),RN(0.2),SND(()=>{playMusic('ending');motif(true);}),
+  L('You made it. You live in the flat.'),
+  L('You wake in the night reaching for a hand on your wrist, counting — and there’s nothing there.'),
+  L('The radiator clanks once. You almost say _“Not yet.”_ There’s no one left to keep.'),
+  Bt('You understood all of it at the gate. That’s the cruel part. You understood after she’d already let go.',null,1800),
+  finale()];}
+function endCold(){return [BG('endCold'),GR(0.9),RN(0.28),SND(()=>{playMusic('ending');motif(true);}),
+  L('You pulled away more than you reached. And you made it — you got the exact life.'),
+  L('Top floor. Launderette. Sea. Radiator. Cheap oranges on the sill. You are safe. You are bored.'),
+  L('It is everything she was dying to give you.'),
+  L('The orange on the windowsill goes soft, then rots, untouched. You were never that fond of them.'),
+  CARD('Boring was never the dream. She was.',5000),
+  finale()];}
+function finale(){return {t:'end',fn:()=>{
+  const lines=[];
+  if(S.warmth>=1) lines.push('You stayed. Nearly every time. You’d rather be ruined together than safe apart. She spent her life making sure you couldn’t be.');
+  else lines.push('You let go when it counted. That wasn’t cowardice — it was the only love that could have got you through that door. You’ll never let yourself believe that.');
+  if(S.orangeLeft) lines.push('There was an orange you didn’t finish. She couldn’t taste it. She gave you the sweet half anyway. I don’t think you’ll set one down again without thinking of her.');
+  lines.push('She bought you a year. Then she bought you a life. Go and be bored with it — that’s the only thank-you she ever wanted.');
+  lines.push((NAME&&NAME!=='YOU')?('…'+NAME+'. There you are. I told you I would keep it.'):'...There you are.');
+  lines.push('Before you go — let me show you what you did. And who that makes you.');
+  mirrorFinale(lines,runResults);
+}};}
+
+/* ===================== RESULTS: choice stats + the mirror's reading ===================== */
+const STATS=[
+ {sig:'Leave your hand',img:'wrist',pc:[['Leave',62,'She kept your pulse under two fingers. You let her. She fell asleep easier those nights — not that she slept.'],['Slide',23,'You took your hand back. She smiled through it. You never saw what the smile cost.'],['nothing',15,'You drifted, and she took her hand back like a thief returning something. Some people apologise for touching you at all.']]},
+ {sig:'Eat it. Tell her',img:'orangeOffer',pc:[['Eat it',71,'It was the last thing she could still give. You took it. Somewhere, that mattered more than either of you knew.'],['Set the rest aside',18,'It dried on the ledge. She watched the last sweet thing she owned go to waste, and said nothing.'],['nothing',15,'She set it down and kept it for you anyway. Some gifts just wait.']]},
+ {sig:'Hold on.',img:'crossback',pc:[['Hold on',64,'Sixty-four percent of hands refused to open. The light moved on anyway. It doesn’t always.'],['Let go',26,'You did the smart thing. It worked. You will hate that it worked for the rest of your life.'],['nothing',10,'You froze — and they saw. Indecision is also a choice. It’s just one nobody makes on purpose.']]},
+ {sig:'Cross back',img:'crossback',pc:[['Cross back',49,'You crossed the aisle into the danger with her. Half of everyone does. Love makes fools at almost exactly fifty percent.'],['Stay a stranger',38,'You stayed a stranger, like she asked. Obedience can be its own kind of devotion. It never feels like it.'],['nothing',13,'You half-rose and the moment closed on you. The body hesitates precisely when the heart can’t.']]},
+ {sig:'Call her name',img:'sayname',pc:[['Call her name',41,'You gave the sky your voice to give her one second of your eyes. Forty-one percent think it was worth it. So did she.'],['Stay silent',44,'You swallowed her name whole. She saw you not-call, and understood. Understanding is not the same as not hurting.'],['nothing',15,'The crowd decided before you did. She never asked why you didn’t call. That silence has two owners.']]},
+ {sig:'Pull her with you',img:'door',pc:[['Pull her',52,'You tried to drag her into the life she bought you. She resisted for one heartbeat — the one they needed. It was never your fault. You will never believe that.'],['Go first',33,'You did the hardest thing on the pier that night. You obeyed. Behind you, she exhaled — the sound of a plan working.'],['nothing',15,'She decided for you, both hands flat on your back. Her last touch was a push toward the rest of your life.']]},
+ {sig:'Reach for her',img:'reach',pc:[['Reach',69,'Sixty-nine percent of hands go out. None of them are fast enough. It isn’t about reaching her. It never was.'],['Stop',22,'You stood still, hands at your sides, and gave her the only thing she asked for. It is the most expensive gift in this story.'],['nothing',9,'Your hand closed on nothing. The gate closed on her face, still shaking her head — still telling you to go.']]}];
+function buildStatSeq(){const seq=[];
+  STATS.forEach(s=>{const r=REC.find(r=>(r.sig||'').indexOf(s.sig)===0||(r.sig||'').includes(s.sig));if(!r)return;
+    const hit=s.pc.find(p=>(r.label||'').includes(p[0]));if(!hit)return;
+    seq.push({img:s.img,label:r.label,pct:hit[1],comment:hit[2]});});
+  return seq;}
+/* PULSE — the mirror draws your heartbeat from your choices, then names the pattern. */
+const PATTERNS={
+ RUN:  ['THE RUNNING PULSE','a heart that runs toward what it loves','Tall, hard, unmissable beats. You reached, you held, you said it out loud — every time the world gave you a chance to flinch, you didn’t. They counted on exactly this. It is why they never told you.',
+   'You love at full volume. People always know where they stand with you, which is rarer than you think — and you would rather be ruined together than safe apart.',
+   'Certainty. You are the one who says the thing out loud first, so the other person never has to be brave alone.',
+   'You love so loudly you can miss the quiet person going quiet. Someone can be disappearing right beside you while you promise them a future.',
+   'They needed to know you would still be standing without them. You spent the whole story proving you wouldn’t be. That was the one gift you refused to give.'],
+ BREATH:['THE HELD BREATH','love kept under the tongue like a secret','Strong beats, almost no sound. You stayed — through every checkpoint, every silence — and never once announced it. The quiet ones always find each other. They knew. They always knew.',
+   'You are steady in the way weather is steady. You don’t declare, you just don’t leave — and the people you love learn to feel it instead of hear it.',
+   'Presence. You stay. Through the bad night, the long silence, the checkpoint — you are simply, physically there.',
+   'You assume they know. Sometimes they need it said, once, plainly — and you will let a whole train ride pass in silence instead.',
+   'They needed to hear you say you wanted the life you were running toward. You did want it. You just never said it loudly enough for them to carry.'],
+ HES:  ['THE HESITANT BEAT','a half-step behind its own heart','Your pulse keeps starting toward them and catching itself. Close enough to keep them warm, far enough to survive them. That half-step is the thing you will replay forever.',
+   'You love carefully, in drafts. You reach and then check yourself — not because you feel less, but because you have learned what it costs to feel it all at once.',
+   'Honesty. You never promise more than you are sure you can carry, and what you do give is real.',
+   'The half-second. People can feel you deciding whether to close the distance, and the deciding is louder to them than the closing.',
+   'They needed one moment of you being certain about them, out loud, without hedging it. You were almost always about to be.'],
+ COUNT:['THE QUIET COUNT','two fingers, no words, always there','A slow, watching rhythm. You said almost nothing and missed almost nothing — you love by witnessing. They performed their whole brave show for an audience of exactly one — you.',
+   'You are the noticing kind. You track the people you love — their tells, their tired days, the smile that has to work — and you rarely say what you have seen.',
+   'Attention. You see people exactly as they are, which is the thing most people spend their whole lives hoping for.',
+   'You watch instead of intervene. You saw the mark, the tiredness, the lie — and let each of them stand.',
+   'They needed to be asked once, in a way they couldn’t slip out of. You gave them room instead — and they used the room to hide in.'],
+ FLAT: ['THE STEADY FLATLINE','survival dressed as calm','Even. Controlled. Correct. You chose the safe thing out loud, every time — which is exactly what they were trying to teach you. Top marks. It is the loneliest kind of passing grade.',
+   'You are the one who stays functional. In a crisis you get calmer, not louder, and you make the correct call while everyone else is feeling things.',
+   'Reliability. You will still be standing, and still be useful, on the worst night of someone’s life.',
+   'Correct is not the same as close. You can do everything right and still leave someone alone in the room with their fear.',
+   'They needed you to survive, and you did — beautifully. They just also hoped you would fight them about it, once, badly, instead of agreeing so well.'],
+ MISS: ['THE MISSING BEAT','the pulse that left before the body did','There are gaps in this reading where a heart should be. You let go early and quietly, exactly as you were asked to. Maybe that was wisdom. Maybe it was relief. The mirror declines to say which.',
+   'You protect yourself first, and you are good at it. You step back before the fall, and you rarely let anyone see the stepping.',
+   'Self-preservation — which is not a crime. You are still here. Someone wanted that badly enough to die for it.',
+   'You leave a little early, every time, so it never gets to be a real goodbye. The people you love feel the door closing before they see it.',
+   'They asked you to let go, and you did it so cleanly they never learned whether it hurt you. They would have liked to know that it did.']};
+const PORDER=['RUN','BREATH','HES','COUNT','FLAT','MISS'];
+/* One tip per person, kept for life. Different words, same wound. */
+const TIPS={
+ RUN:['You love people at full volume because somewhere you learned that if you stop pushing, things get taken. Ask the person you love what they are carrying alone — then ask again, past the first easy answer. That one was for your benefit.',
+      'You would take the hit for them without thinking. That was never the hard part for you. The hard part is asking whether they wanted to be someone who needed saving — or just someone you talked to.',
+      'You are tired. You do not say it, because you are the one who holds things. Let them see you struggle once. People who are only ever rescued by you slowly stop believing they are your equal.',
+      'There is someone you are being brave at instead of honest with. They can feel the difference, even if neither of you can name it.',
+      'One day someone you love will be hurting from something you cannot fix by being strong at it. Practise being useless beside them now, while it is only a bad week — because you will not learn it later.'],
+ BREATH:['You assume they know. You have shown them a hundred quiet times — the lifts, the meals, the staying. But nobody has ever been able to hear you staying. Say one sentence out loud this week, with their name in it.',
+      'You are waiting for the right moment. It has not come for years now. There is no right moment — there is only a shrinking number of moments, and then the number is zero.',
+      'The people who love the quietest are the easiest to leave, and it has nothing to do with loving less. It is that nothing was ever said out loud that would be hard to walk away from.',
+      'Someone in your life is quietly deciding how much they matter to you, using only the evidence you gave them. Look at that evidence honestly. Then go and add to it today.',
+      'You would be devastated if they left. They do not know that. You have to actually tell them, in words, and it will feel ridiculous, and you should do it anyway.'],
+ HES:['You keep almost saying it. You rehearse it, you find the flaw in the timing, you put it down. Say it within seven days — badly, at a bad moment, unrehearsed. Perfect timing is just a polite word for never.',
+      'You think the distance you keep is protecting them from you. It is not. They can feel you hesitating, and they do not read it as care — they read it as doubt about them.',
+      'You will not lie awake over the times you reached and it was awkward. Only the times the moment closed while you were still deciding, and it was too late to explain what you had meant.',
+      'Half-loving someone is not a smaller risk. It is the same loss, arriving slower, with less to remember afterwards.',
+      'Ask yourself what you are holding the half-step back for. If the answer is “in case this ends” — then you have already quietly started ending it, and they are already quietly noticing.'],
+ COUNT:['You see everything. The tiredness, the flat voice, the smile that has to work. You are almost always right, and you almost never say it. Say one thing you have seen today, out loud, to their face.',
+      'Watching someone struggle respectfully is not the same as helping them. Sometimes love has to be an interruption — clumsy, unasked-for, and exactly on time.',
+      'The people who need you most have already decided not to ask. If you wait to be asked, you will only ever end up helping the ones who were going to be fine.',
+      'Being deeply seen and never spoken to is its own particular loneliness. You know that, because you have lived inside it. Do not hand it to someone you love.',
+      'You have been quietly worried about someone for a while now. Not next week. Today. Say: “I have noticed. Tell me.”'],
+ FLAT:['You are the one who stays functional, and people have stopped asking how you are because you always seem fine. “Fine” is not a personality. Let one person see you not-fine this month, and let them stay in the room while you are.',
+      'When someone you love is in pain, you reach for the solution — because sitting in it feels unbearable and useless. Try being useless beside them once. Nobody remembers the advice. They remember who stayed while it was unsolved.',
+      'You can do everything correctly and still leave someone completely alone in the room. Ask what they need instead of deciding what is best for them.',
+      'Your calm is a gift in a crisis and a wall in a relationship. Know which one you are handing them tonight.',
+      'You learned somewhere that falling apart was not an option for you. It is. It always was. And the person who loves you has been waiting years to be allowed to help.'],
+ MISS:['You leave a little early, every time, so that it never becomes a real goodbye. You know exactly what this sentence is about. Stay through one hard conversation this year — past the point where you want to go.',
+      'Protecting yourself is allowed. You are allowed. But say out loud that you are doing it, so they do not spend years believing they simply were not worth staying for.',
+      'A door closed quietly is still a closed door. If leaving cost you something, let someone see that it did — otherwise the only thing they learn about you is how easily you went.',
+      'You are very good at surviving people. At some point that stops being a skill and starts being the reason nobody has ever really known you.',
+      'Somewhere there is a person still carrying the idea that they did something wrong — because you disappeared before explaining that you were simply frightened.']};
+const TIPS_ANY=['Tell one person this week the thing you assume they already know. Assumption has quietly ended more love than betrayal ever has.',
+ 'Ask someone you love: “what are you not telling me because you think I can’t take it?” Then be someone who can take it.',
+ 'Nobody is saving their best self for later. How you are with them this month is the relationship. There is no other one coming.',
+ 'People do not need to be adored. They need to be chosen out loud, occasionally, in front of other people.',
+ 'If someone has gone quiet with you lately, they are usually not withdrawing. They are waiting to find out whether you notice.',
+ 'Say the sentence that scares you while the person is still in the room. Almost every regret is a sentence that arrived too late.',
+ 'Love is mostly logistics and attention. The grand gesture is easy. Remembering what they said on a Tuesday is the whole thing.',
+ 'Do not make anyone guess how much room they have in your life. Tell them the size of it, then keep it that size.',
+ 'Everyone you love is carrying something they have decided not to mention today. Ask about it before it becomes the thing you find out too late.',
+ 'You will not get a warning. There is no announcement before the last ordinary evening with someone. Behave accordingly, mildly, starting tonight.',
+ 'The version of them you are irritated by this week is a person who will one day not be reachable. Let that land for four seconds, then go and be kind.',
+ 'If you are waiting to be sure before you love someone properly — you will be sure only in hindsight, which is the one place it is no use.'];
+function pickTips(k,n){const pool=TIPS[k].concat(TIPS_ANY).slice();
+  const out=[];n=n||2;
+  while(out.length<n&&pool.length){out.push(pool.splice((Math.random()*pool.length)|0,1)[0]);}
+  return out;}
+function getTip(k){return pickTips(k,1)[0];}
+/* ===== pulse heartbeat sound (synth, per pattern) ===== */
+let pulseAudioTimer=null;
+const PCOL={RUN:['#ff5d7a','rgba(255,93,122,'],BREATH:['#7fe0d0','rgba(127,224,208,'],HES:['#ffb14e','rgba(255,177,78,'],
+ COUNT:['#c9a0ff','rgba(201,160,255,'],FLAT:['#7fdcff','rgba(127,220,255,'],MISS:['#8fa0bd','rgba(143,160,189,']};
+let PKEY='RUN';
+function ensureAudio(){try{initAudio();if(AC&&AC.state==='suspended')AC.resume();
+  if(AC&&master&&master.gain.value<0.3)master.gain.setValueAtTime(sndOn?0.7:0,AC.currentTime);}catch(e){}}
+function pulseBeat(strength,thump){ensureAudio();if(!AC||!sndOn)return;
+  const t0=AC.currentTime,v=Math.min(1,0.85*strength*PREFS.sv);
+  /* body thump */
+  const o=AC.createOscillator(),g=AC.createGain(),lp=AC.createBiquadFilter();
+  lp.type='lowpass';lp.frequency.value=thump?260:420;o.type='sine';
+  o.frequency.setValueAtTime(thump?110:150,t0);o.frequency.exponentialRampToValueAtTime(thump?40:56,t0+0.2);
+  g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(v,t0+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t0+0.34);
+  o.connect(lp);lp.connect(g);g.connect(master);o.start(t0);o.stop(t0+0.38);
+  /* click transient so it cuts through */
+  const o2=AC.createOscillator(),g2=AC.createGain();o2.type='triangle';
+  o2.frequency.setValueAtTime(thump?190:240,t0);o2.frequency.exponentialRampToValueAtTime(70,t0+0.07);
+  g2.gain.setValueAtTime(0.0001,t0);g2.gain.exponentialRampToValueAtTime(v*0.5,t0+0.006);g2.gain.exponentialRampToValueAtTime(0.0001,t0+0.12);
+  o2.connect(g2);g2.connect(master);o2.start(t0);o2.stop(t0+0.14);}
+const PSOUND={RUN:{bpm:96,s:1.15,skip:0},BREATH:{bpm:58,s:1.0,skip:0},HES:{bpm:74,s:0.72,skip:0.25},
+ COUNT:{bpm:54,s:0.6,skip:0},FLAT:{bpm:66,s:0.42,skip:0},MISS:{bpm:48,s:0.55,skip:0.45}};
+function hushRain(ms){if(rainEl2)fadeAudio(rainEl2,0,ms||1500);}
+/* pulse.mp3 — comes in UNDER the heartbeat, then settles to a steady level and stays */
+let pulseMusicEl=null;
+const PM_LOW=0.16,PM_SET=0.34;
+function startPulseMusic(){
+  if(pulseMusicEl){fadeAudio(pulseMusicEl,PM_LOW*PREFS.mv,1500);return;}
+  tryAudio('audio/pulse.mp3',a=>{a.loop=true;a.volume=0;a.muted=!sndOn;a.play().catch(()=>{});
+    const old=musicEl;pulseMusicEl=a;musicEl=a;curMusicBase=PM_LOW;
+    fadeAudio(a,PM_LOW*PREFS.mv,2500);
+    if(old&&old!==a){fadeAudio(old,0,1800);setTimeout(()=>{try{old.pause();}catch(e){}},1900);}});}
+function pulseMusicSettle(){if(!pulseMusicEl)return;curMusicBase=PM_SET;fadeAudio(pulseMusicEl,PM_SET*PREFS.mv,2200);}
+function startPulseSound(key){stopPulseSound();ensureAudio();hushRain(900);const p=PSOUND[key]||PSOUND.HES;const gap=60000/p.bpm;
+  const run=()=>{if(Math.random()>=p.skip){pulseBeat(p.s,true);setTimeout(()=>pulseBeat(p.s*0.62,false),gap*0.28);}};
+  run();pulseAudioTimer=setInterval(run,gap);}
+function stopPulseSound(){if(pulseAudioTimer){clearInterval(pulseAudioTimer);pulseAudioTimer=null;}}
+function getCollected(){try{return JSON.parse(localStorage.getItem('m_pulses')||'[]');}catch(e){return [];}}
+function addCollected(k){try{const a=getCollected();if(a.indexOf(k)<0){a.push(k);localStorage.setItem('m_pulses',JSON.stringify(a));}
+  if(!localStorage.getItem('m_first')){const d=new Date();
+    localStorage.setItem('m_first',JSON.stringify({k:k,name:NAME,date:d.toLocaleDateString(),time:d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}));}
+  localStorage.setItem('m_last',k);}catch(e){}}
+function getFirst(){try{const f=JSON.parse(localStorage.getItem('m_first')||'null');
+  if(f)return f;
+  const g=getCollected();if(g.length){const d=new Date();
+    const nf={k:g[0],name:NAME,date:d.toLocaleDateString(),time:d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};
+    localStorage.setItem('m_first',JSON.stringify(nf));return nf;}
+  return null;}catch(e){return null;}}
+function pulseRead(){
+  const w=S.warmth,sil=REC.filter(r=>r.sil).length;
+  let key;
+  if(w>=3) key=(sil>=3)?'BREATH':'RUN';
+  else if(w<=-2) key=(sil>=3)?'MISS':'FLAT';
+  else key=(sil>=3)?'COUNT':'HES';
+  const t=PATTERNS[key];
+  const mods=[];
+  if(S.reached) mods.push('And at the gate — one last spike, bigger than all the rest. The hand went out. It always would have.');
+  if(S.letGo) mods.push('There: a skipped beat. Your pulse learned to go quiet exactly when the light passed over it. She taught it that.');
+  if(S.orangeLeft) mods.push('And somewhere under the reading, faint: an orange, drying by a window.');
+  return {key:key,name:t[0],tag:t[1],desc:t[2],love:t[3],gift:t[4],cost:t[5],her:t[6],mods:mods};}
+/* draw the player's actual heartbeat from their choices */
+function drawPulse(cv,key){
+  const col=PCOL[key||PKEY]||PCOL.RUN,CS=col[0],CR=col[1];
+  const x=cv.getContext('2d'),W=cv.width,H=cv.height,mid=H*0.56;
+  const beats=REC.map(r=>r.sil?0:(r.warm>0?1:0.42));
+  if(S.reached)beats.push(1.35);
+  let seg=[],px=0;
+  const step=W/(beats.length+1.5);
+  const GRID=CR+'0.13)',GRID2=CR+'0.07)';
+  x.clearRect(0,0,W,H);
+  /* build path points */
+  const pts=[[0,mid]];px=step*0.4;
+  beats.forEach((b,i)=>{
+    if(b===0){pts.push([px+step*0.8,mid]);px+=step;return;} /* silence: flatline */
+    const skip=(S.letGo&&i===Math.min(4,beats.length-1));
+    if(skip){pts.push([px+step*0.9,mid]);px+=step*1.15;} /* skipped beat gap */
+    pts.push([px,mid]);pts.push([px+step*0.16,mid-6*b]);pts.push([px+step*0.3,mid+H*0.11*b]);
+    pts.push([px+step*0.42,mid-H*0.34*b]);pts.push([px+step*0.54,mid+H*0.16*b]);pts.push([px+step*0.68,mid]);
+    px+=step;});
+  pts.push([W,mid]);
+  /* animate the trace — loops forever like a real monitor */
+  let prog=0;const total=pts.length,SP=0.5;
+  if(cv._stop)cv._stop();let alive=true;cv._stop=()=>{alive=false;};
+  (function anim(){
+    if(!alive)return;
+    prog+=SP;if(prog>total+26)prog=0;
+    const shown=Math.min(total,Math.floor(prog));
+    x.clearRect(0,0,W,H);
+    x.lineWidth=1;
+    x.strokeStyle=GRID2;
+    for(let gx=0;gx<W;gx+=13){x.beginPath();x.moveTo(gx,0);x.lineTo(gx,H);x.stroke();}
+    for(let gy=0;gy<H;gy+=13){x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}
+    x.strokeStyle=GRID;
+    for(let gx=0;gx<W;gx+=65){x.beginPath();x.moveTo(gx,0);x.lineTo(gx,H);x.stroke();}
+    for(let gy=0;gy<H;gy+=65){x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}
+    x.save();x.lineJoin='round';x.lineWidth=2.2;
+    /* fading tail behind the sweep */
+    for(let i=1;i<shown;i++){const a=Math.max(0.12,1-(shown-i)/95);
+      x.strokeStyle=CR+a+')';x.shadowColor=CS;x.shadowBlur=a>0.6?12:0;
+      x.beginPath();x.moveTo(pts[i-1][0],pts[i-1][1]);x.lineTo(pts[i][0],pts[i][1]);x.stroke();}
+    x.restore();
+    const tip=pts[Math.max(0,shown-1)];
+    if(tip&&shown<total){x.fillStyle='#fff';x.shadowColor=CS;x.shadowBlur=18;x.beginPath();x.arc(tip[0],tip[1],3,0,7);x.fill();x.shadowBlur=0;}
+    requestAnimationFrame(anim);})();}
+function runResults(){
+  hushRain(3000);
+  const m=document.getElementById('mirror');m.style.transition='opacity 1.6s';m.style.opacity=0;
+  setTimeout(()=>{m.style.display='none';mirrorOn=false;},1600);
+  document.getElementById('cap').style.display='none';
+  const seq=buildStatSeq(),c=document.getElementById('card'),ct=c.querySelector('.ct');
+  let i=0;
+  function showNext(){
+    if(i<seq.length){const s=seq[i++];try{setBG(s.img,false);}catch(e){}
+      ct.innerHTML='<div style="font-size:11px;letter-spacing:4px;color:#8f81a0;margin-bottom:14px">WHAT YOU CHOSE</div>'
+       +'<div style="font-size:19px;margin-bottom:12px">“'+s.label+'”</div>'
+       +'<div style="font-size:15px;color:#9fd8ea;font-style:normal;margin-bottom:14px">'+s.pct+'% of players chose this too.</div>'
+       +'<div style="font-size:15.5px;color:#c3b4cf">'+s.comment+'</div>'
+       +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:20px">CLICK ▸</div>';
+      c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;});
+      c.onclick=()=>{c.style.opacity=0;setTimeout(showNext,650);};
+    }else{
+      const p=pulseRead();
+      bgA.classList.remove('on');bgB.classList.remove('on');grade(1);
+      ct.innerHTML='<div style="font-size:11px;letter-spacing:5px;color:#8f81a0;margin-bottom:6px">HOLD STILL. THE MIRROR TAKES YOUR</div>'
+       +'<div style="font-size:22px;letter-spacing:9px;color:'+(PCOL[p.key]||PCOL.RUN)[0]+';font-style:normal;margin-bottom:12px;text-shadow:0 0 20px '+(PCOL[p.key]||PCOL.RUN)[1]+'.6)">P U L S E</div><div style="font-size:11px;letter-spacing:4px;color:#7d7290;margin-bottom:14px;font-style:italic">listen carefully — this one is yours'+((NAME&&NAME!=='YOU')?(' <span style="letter-spacing:2px;color:#8f81a0"> · '+NAME.toUpperCase()+'</span>'):'')+'</div>'
+       +'<canvas id="pulseCv" width="640" height="150" style="width:min(640px,84vw);height:auto;border-radius:10px;border:1px solid '+(PCOL[p.key]||PCOL.RUN)[1]+'.35);background:rgba(8,6,14,.72);box-shadow:0 0 34px '+(PCOL[p.key]||PCOL.RUN)[1]+'.18);margin-bottom:14px"></canvas>'
+       +'<div style="font-size:26px;letter-spacing:3px;margin-bottom:6px;color:'+(PCOL[p.key]||PCOL.RUN)[0]+'">'+p.name+'</div>'
+       +'<div style="font-size:13px;color:#9fb8c8;margin-bottom:13px">— '+p.tag+' —</div>'
+       +'<div style="font-size:15px;color:#cbb8d6;line-height:1.85">'+p.desc+'</div>'
+       +(p.mods.length?('<div style="font-size:13.5px;color:#9a8fae;line-height:1.8;margin-top:12px">'+p.mods.join('<br>')+'</div>'):'')
+       +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:16px">CLICK ▸</div>';
+      c.style.display='flex';requestAnimationFrame(()=>{c.style.opacity=1;
+        const cv=document.getElementById('pulseCv');if(cv)setTimeout(()=>{drawPulse(cv,p.key);startPulseSound(p.key);startPulseMusic();},900);});
+      addCollected(p.key);
+      c.onclick=()=>{c.style.opacity=0;setTimeout(()=>showPartner(p),700);};
+    }}
+  setTimeout(showNext,1800);}
+/* what kind of partner are you */
+function showPartner(p){
+  stopPulseSound();pulseMusicSettle();
+  const c=document.getElementById('card'),ct=c.querySelector('.ct');
+  const row=(lab,txt,col)=>'<div style="margin:0 0 15px"><div style="font-size:9.5px;letter-spacing:4px;color:'+col+';margin-bottom:5px;font-style:normal">'+lab+'</div><div style="font-size:14.5px;color:#cbb8d6;line-height:1.75">'+txt+'</div></div>';
+  ct.innerHTML='<div style="font-size:10px;letter-spacing:5px;color:#8f81a0;margin-bottom:5px">AS A PARTNER</div>'
+   +'<div style="font-size:21px;letter-spacing:2px;color:#ffd7e8;margin-bottom:18px">'+p.name+'</div>'
+   +'<div style="text-align:left;max-width:600px">'
+   +row('HOW YOU LOVE','“'+p.love+'”','#9fd8ea')
+   +row('YOUR GIFT','“'+p.gift+'”','#9effa5')
+   +row('WHAT IT COSTS','“'+p.cost+'”','#ffb14e')
+   +row('WHAT YOUR PARTNER NEEDED','“'+p.her+'”','#ff9ecb')
+   +'</div>'
+   +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:6px">CLICK ▸</div>';
+  c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;});
+  c.onclick=()=>{c.style.opacity=0;setTimeout(()=>{showTip(p);if(window._devMode)devShowCard();},700);};}
+/* the one true thing the mirror gives you to take back with you */
+function showTip(p){
+  const c=document.getElementById('card'),ct=c.querySelector('.ct'),tips=pickTips(p.key,2);
+  ct.innerHTML='<div style="font-size:10px;letter-spacing:5px;color:#8f81a0;margin-bottom:16px">TAKE THIS BACK WITH YOU</div>'
+   +'<div style="font-size:clamp(16px,2.2vw,20px);color:#ffe9f2;line-height:2;max-width:600px">'+tips[0]+'</div>'
+   +(tips[1]?'<div style="font-size:clamp(15px,2vw,18px);color:#d9c9e4;line-height:2;max-width:600px;margin-top:16px">'+tips[1]+'</div>':'')
+   +'<div style="width:60px;height:1px;background:rgba(255,158,203,.4);margin:24px auto"></div>'
+   +'<div style="font-size:13px;color:#9a8fae;font-style:normal;line-height:1.8;max-width:520px">The mirror says this to you, tonight, in this state you are in.<br>Someone else is being told something different. It will be just as true.</div>'
+   +(window._devMode?'<div style="margin-top:14px"><button class="fbtn" id="rerollTip" style="font-size:11px">↻ re-roll tips (dev)</button></div>':'')
+   +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:20px">CLICK ▸</div>';
+  c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;
+    const rr=document.getElementById('rerollTip');if(rr)rr.onclick=e=>{e.stopPropagation();showTip(p);devShowCard();};});
+  c.onclick=()=>{c.style.opacity=0;setTimeout(()=>{showShelf(p);if(window._devMode)devShowCard();},700);};}
+/* collectible shelf */
+function showShelf(p){
+  const c=document.getElementById('card'),ct=c.querySelector('.ct'),got=getCollected();
+  let cards='';
+  PORDER.forEach(k=>{const t=PATTERNS[k],has=got.indexOf(k)>=0,isNew=(k===p.key);
+    cards+='<div style="width:150px;padding:10px 9px;border-radius:10px;border:1px solid '+(has?(isNew?'#ffb14e':'rgba(255,255,255,.2)'):'rgba(255,255,255,.07)')+';background:'+(has?'rgba(255,255,255,.05)':'rgba(255,255,255,.015)')+';text-align:center">'
+     +'<canvas class="shcv" data-k="'+k+'" width="260" height="70" style="width:100%;height:36px;border-radius:6px;background:rgba(8,6,14,.7);margin-bottom:7px;'+(has?'':'opacity:.22;filter:grayscale(1)')+'"></canvas>'
+     +'<div style="font-size:10.5px;letter-spacing:1px;color:'+(has?PCOL[k][0]:'#4c4458')+';font-style:normal;line-height:1.4">'+(has?t[0].replace('THE ',''):'? ? ?')+'</div>'
+     +(isNew?'<div style="font-size:8px;letter-spacing:2px;color:#ffb14e;margin-top:5px;font-style:normal">NEW</div>':'')
+     +'</div>';});
+  ct.innerHTML='<div style="font-size:10px;letter-spacing:5px;color:#8f81a0;margin-bottom:6px">PULSES COLLECTED</div>'
+   +'<div style="font-size:24px;letter-spacing:3px;color:#ffd7e8;margin-bottom:4px;font-style:normal">'+got.length+' / 6</div>'
+   +'<div style="font-size:12.5px;color:#9fb8c8;margin-bottom:18px">Other choices make other hearts. The mirror keeps them all.</div>'
+   +'<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:640px">'+cards+'</div>'
+   +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:20px">CLICK ▸</div>';
+  c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;
+    document.querySelectorAll('.shcv').forEach(cv=>drawMiniPulse(cv,cv.dataset.k));});
+  c.onclick=()=>{c.style.opacity=0;setTimeout(theEnd,700);};}
+/* a small idealised heartbeat per pattern, for the archive rows */
+function drawMiniPulse(cv,key){
+  const x=cv.getContext('2d'),W=cv.width,H=cv.height,mid=H*0.56;
+  const shapes={RUN:[1,1,1,1],BREATH:[0.95,0.25,1,0.9],HES:[0.5,0.85,0.4,0.9],COUNT:[0.5,0.28,0.55,0.28],FLAT:[0.32,0.32,0.32,0.32],MISS:[0.6,0.12,0.1,0.5]};
+  const b=shapes[key]||[0.6,0.6,0.6,0.6],pts=[[0,mid]];let px=W*0.06;const st=W*0.22;
+  b.forEach(v=>{if(v===0){pts.push([px+st*0.8,mid]);px+=st;return;}
+    pts.push([px,mid]);pts.push([px+st*0.14,mid-3*v]);pts.push([px+st*0.28,mid+H*0.12*v]);
+    pts.push([px+st*0.4,mid-H*0.36*v]);pts.push([px+st*0.52,mid+H*0.15*v]);pts.push([px+st*0.66,mid]);px+=st;});
+  pts.push([W,mid]);
+  let prog=0;const total=pts.length,mc=PCOL[key]||PCOL.RUN;
+  if(cv._stop)cv._stop();let alive=true;cv._stop=()=>{alive=false;};
+  (function anim(){if(!alive)return;prog+=0.5;if(prog>total+20)prog=0;
+    const shown=Math.min(total,Math.floor(prog));x.clearRect(0,0,W,H);
+    /* full trace, dim — so the shape is always readable */
+    x.save();x.lineWidth=1.5;x.lineJoin='round';x.strokeStyle=mc[1]+'0.3)';
+    x.beginPath();for(let i=0;i<total;i++){const p=pts[i];if(i===0)x.moveTo(p[0],p[1]);else x.lineTo(p[0],p[1]);}x.stroke();
+    /* bright sweep travelling over it */
+    for(let i=1;i<shown;i++){const a=1-(shown-i)/36;if(a<=0)continue;
+      x.strokeStyle=mc[1]+a+')';x.shadowColor=mc[0];x.shadowBlur=a>0.5?9:0;
+      x.beginPath();x.moveTo(pts[i-1][0],pts[i-1][1]);x.lineTo(pts[i][0],pts[i][1]);x.stroke();}
+    x.restore();requestAnimationFrame(anim);})();}
+function openArchive(){
+  hushRain(1200);if(musicEl)fadeAudio(musicEl,curMusicBase*PREFS.mv*0.25,1200);
+  const got=getCollected(),list=document.getElementById('arList'),first=getFirst(),last=(()=>{try{return localStorage.getItem('m_last');}catch(e){return null;}})();
+  document.getElementById('arCount').textContent=got.length+' OF 6 HEARTS RECORDED';
+  const fh=document.getElementById('arFirst');
+  if(first&&PATTERNS[first.k]){
+    fh.style.display='block';
+    fh.innerHTML='<div style="font-size:9px;letter-spacing:4px;color:#8f81a0;margin-bottom:6px">THE FIRST HEART YOU GAVE ME</div>'
+     +'<div style="font-size:17px;letter-spacing:2px;color:'+PCOL[first.k][0]+'">'+PATTERNS[first.k][0]+'</div>'
+     +'<div style="font-size:11.5px;color:#9fb8c8;font-style:italic;margin-top:4px">'+PATTERNS[first.k][1]+'</div>'
+     +'<div style="font-size:10px;color:#6e6280;margin-top:7px;font-style:normal;letter-spacing:1px">'
+       +(first.name&&first.name!=='YOU'?first.name.toUpperCase()+' · ':'')+first.date+' · '+first.time+'</div>'
+     +'<div style="font-size:11px;color:#8a7f98;font-style:italic;margin-top:9px;line-height:1.7">This one was not a choice you made about a story.<br>It was the first thing you did when you didn’t know I was counting.</div>';
+  } else fh.style.display='none';
+  list.innerHTML='';
+  PORDER.forEach(k=>{const t=PATTERNS[k],has=got.indexOf(k)>=0;
+    const row=document.createElement('div');row.className='arow'+(has?'':' lock');row.style.cursor='pointer';
+    const cv=document.createElement('canvas');cv.width=300;cv.height=88;
+    const tx=document.createElement('div');tx.style.flex='1';
+    tx.innerHTML='<div class="an"'+(has?' style="color:'+PCOL[k][0]+'"':'')+'>'+(has?t[0]:'? ? ? ? ?')+'</div><div class="at">'+(has?t[1]:'not yet lived')+'</div>'
+      +(first&&first.k===k?'<div style="font-size:9px;letter-spacing:3px;color:#ffb14e;margin-top:4px;font-style:normal">★ YOUR FIRST</div>':'')
+      +(last===k&&(!first||first.k!==k)?'<div style="font-size:9px;letter-spacing:3px;color:#9fb8c8;margin-top:4px;font-style:normal">◂ MOST RECENT</div>':'')
+      +'<div class="apl" style="font-size:10px;letter-spacing:2px;color:#6e6280;margin-top:4px;font-style:normal">'+(has?'♥ CLICK TO LISTEN &nbsp;·&nbsp; ⤢ VIEW':'♥ CLICK TO LISTEN')+'</div>';
+    if(has){const vb=document.createElement('button');vb.className='fbtn';vb.textContent='⤢';
+      vb.style.cssText='flex:none;font-size:13px;padding:6px 10px;color:'+PCOL[k][0];
+      vb.onclick=e=>{e.stopPropagation();document.getElementById('archive').style.display='none';previewPulse(k);};
+      row.appendChild(vb);}
+    row.insertBefore(cv,row.firstChild);row.insertBefore(tx,row.children[1]);list.appendChild(row);
+    drawMiniPulse(cv,k);
+    row.onclick=()=>{const playing=row.classList.contains('playing');
+      list.querySelectorAll('.arow').forEach(r=>{r.classList.remove('playing');const p=r.querySelector('.apl');if(p){p.textContent='♥ CLICK TO LISTEN';p.style.color='#6e6280';}});
+      if(playing){stopPulseSound();return;}
+      startPulseSound(k);row.classList.add('playing');
+      const p=tx.querySelector('.apl');p.textContent='♥ BEATING — CLICK TO STOP';p.style.color='#ff9ecb';};});
+  document.getElementById('archive').style.display='flex';}
+document.getElementById('arClose').addEventListener('click',()=>{stopPulseSound();document.getElementById('archive').style.display='none';
+  if(rainEl2)fadeAudio(rainEl2,(curRainV2>0?curRainV2*0.22:0.16)*PREFS.rv,1400);
+  if(musicEl)fadeAudio(musicEl,curMusicBase*PREFS.mv,1400);});
+document.getElementById('oArch').addEventListener('click',openArchive);
+function theEnd(){const c=document.getElementById('card');c.style.display='none';c.onclick=null;
+  try{localStorage.removeItem('m_save');}catch(e){}stopPulseSound();
+  const d=document.createElement('div');
+  d.style.cssText='position:fixed;inset:0;background:#020204;z-index:80;display:flex;flex-direction:column;gap:26px;align-items:center;justify-content:center;opacity:0;transition:opacity 2.5s';
+  d.innerHTML='<div style="font-style:italic;letter-spacing:6px;font-size:15px;color:#8fa8b8">the end</div>'
+   +'<div style="display:flex;gap:12px;opacity:0;transition:opacity 1.6s" id="endBtns">'
+   +'<button class="fbtn" id="endArch">pulse archive</button>'
+   +'<button class="fbtn" id="endAgain">be someone else</button></div>';
+  document.body.appendChild(d);requestAnimationFrame(()=>d.style.opacity=1);fadeOutAll();
+  setTimeout(()=>{const b=document.getElementById('endBtns');if(b)b.style.opacity=1;},3200);
+  d.querySelector('#endArch').onclick=openArchive;
+  d.querySelector('#endAgain').onclick=()=>location.reload();}
+
+function story(){return [
+ /* ---------- ACT 1 : THE TRAIN ---------- */
+ {t:'ckpt',k:'train'},
+ BG('city'),GR(0.32),RN(0.5),SND(()=>motif(false)),
+ L('Rain on the glass. The city pulls past in long wet streaks of light.'),
+ BG('carriage'),GR(0.24),RN(0.05),
+ L('You’re asleep. You always are — anywhere that hums or moves. You go down like a stone.'),
+ L('Wren isn’t. Wren sleeps in pieces, when at all.'),
+ L('_There’s a gap in you, from a while back — a week you can’t account for. A room that smelled of antiseptic. You woke with her already there, two fingers on your wrist, counting._'),
+ L('_You never asked how you got there. Every time you circle near it, she goes somewhere quiet, and you let it go. You’ve always let it go. It’s the one thing you two never touch._'),
+ PAUSE(1400),
+ BG('wrist'),
+ L('Her fingers settle on the inside of your wrist. They rest there. Still.'),
+ L('Hey.','WREN'),Bt('Not yet.','WREN',1100),
+ L('You did the thing again. You stop breathing for a second. Then you remember to start.','WREN'),
+ CH('Her fingers still haven’t left your wrist.',[
+   {label:'Leave your hand where it is.',warm:1,bg:'wristLeave',result:[L('You let her keep it. Her thumb moves once, slow, and settles.')]},
+   {label:'Slide your hand free. “You can stop hovering.”',warm:-1,result:[L('It comes out easy, a little dry. She lifts her hand at once. “Fine, fine.” You don’t catch the half-second where the smile has to work to stay on.')]},
+   {silence:true,result:[L('_You don’t answer. You just drift, somewhere else._'),L('She lifts her fingers off your wrist herself — slow, careful, the way you’d take your hand back from someone you didn’t want to wake.'),Bt('…Okay.','WREN',900)]}]),
+ BG('orangeOffer'),
+ L('She peels an orange, badly, the way she always does. Pith everywhere. She splits it and holds the sweeter half out.'),
+ L('Here. That one’s sweeter.','WREN'),
+ CH('',[
+   {label:'Eat it. Tell her it’s good.',warm:1,bg:'orangeEat',result:[L('You do, and it is. She watches you eat it the way some people watch a fire — like the warmth is the point.')]},
+   {label:'Set the rest aside. “I’m kind of oranged-out.”',warm:-1,set:{orangeLeft:true},bg:'orangeLeave',result:[L('It’s nothing. Everyone gets sick of a thing. The half you leave dries at the edges by the window.')]},
+   {silence:true,set:{orangeLeft:true},bg:'orangeLeave',result:[L('_You don’t take it._ She sets the sweeter half on the ledge by your hand — kept for you, going quietly soft. She says nothing.')]}]),
+ BG('carriage'),
+ L('Top floor. Over the launderette.','WREN'),
+ L('The one by the sea.','YOU'),
+ L('Radiator that clanks all night, so we never need a clock. Ugly curtains. The ugliest.','WREN'),
+ Bt('We get old there. Bored, even. We earn the right to be bored.','WREN',1300),
+ L('_She tells it every few nights — the flat, the sea, the ugly curtains — the same words in the same order, like a lullaby she’s teaching you to say without her. You never wonder why she’s always the one who tells it._'),
+ PAUSE(1300),
+ SND(()=>tick()),
+ L('The speaker crackles. _Next station. All passengers prepared for inspection._'),
+ BG('mark'),
+ L('Her sleeve slips. On the inside of her wrist — a thin line of _wrong_ under the skin, catching the neon.'),
+ PAUSE(1500),
+ CH('She notices you noticing.',[
+   {label:'Ask if it hurts.',warm:1,result:[L('“Does it hurt?” She stops. For a second the careful thing behind her face slips. “…No,” she says. It isn’t true. You both let it not be true.')]},
+   {label:'Look away. Pretend you didn’t see.',warm:-1,result:[L('You give her the small mercy of pretending. “It’s nothing,” she tells the glass.')]},
+   {silence:true,result:[L('_You don’t ask, and you don’t look away — you just look, a beat too long, while she watches you look._')]}]),
+ BG('carriage'),
+ L('_The train slows. Hard white light slides up out of the rain._'),
+ L('Maybe sit somewhere else. Just for this part.','WREN'),
+ CH('_It lands wrong. After the wrist, the orange, the dream — now: move away._',[
+   {label:'Stay beside her.',warm:1,set:{apart:false},result:[L('Your shoulder against hers. She breathes out and doesn’t argue.')]},
+   {label:'Move to another seat.',warm:-1,set:{apart:true},result:[L('Three feet. It feels like a country. “Thank you,” she says, barely. You can’t tell if it’s relief or grief.')]},
+   {silence:true,set:{apart:false},result:[L('_You don’t move, and you don’t say you’re staying. You just sit there, not deciding._'),L('She faces front. You stayed, but not as a choice.')]}]),
+ DYN(s=>BG(s.apart?'apart':'checkpoint',false)),GR(0.8),RN(0.2),SND(()=>tick()),
+ L('The doors hiss open. One inspector boards, working down the carriage. Scanner wands ticking — a small, dead sound.'),
+ DYN(s=>s.apart?ckApart():ckClose()),
+ L('_The doors close. The train pulls back into the rain — and wherever you’re sitting now, you both let out a breath you didn’t know you were holding._'),
+ BG('station'),GR(0.55),RN(0.35),SND(()=>motif(true)),
+ L('Off the train. Under a station overhang, the platform emptied out. You survived — this one.'),
+ L('She’s watching the rain like it owes her an explanation.'),
+ CH('You could ask the thing you’ve never asked.',[
+   {label:'“Why did you take it?”',warm:1,result:[L('For a moment — you’d swear — she almost says something true. Her mouth opens on it.'),Bt('Before I knew better.','WREN',1200),Bt('_A door shut soft. And under everything, a thought you’d never say: so it was your own choice that put us here. You let it stay._')]},
+   {label:'“You don’t have to tell me.”',warm:-1,result:[L('She looks at you — something grateful and bottomless. “…Yeah.” You let her keep the secret, and call it kindness.')]},
+   {silence:true,result:[L('_You don’t ask, and you don’t let her off the hook. The not-asking has a shape._'),L('“…It’s a long story,” she says, to the rain. And puts it away.')]}]),
+
+ /* ---------- MOVEMENT 2 : THE ESCAPE ---------- */
+ {t:'ckpt',k:'hideout'},
+ BG('hideout'),GR(0.5),RN(0.10),SND(()=>{scoreMood='escape';sfx('escape_hit');playMusic('hideout');}),
+ L('A cheap room. A boarded window, one candle, rain on the roof. You’ve stopped, for a few hours.'),
+ L('She sits with her back near to the door. She always sits with her back near the door — between you and the way in.'),
+ L('_The plan is small and whole. One boat: the last night ferry, before they seal the water checks at dawn. Across the black water — the coast, the launderette, the flat. You’ve run three days for a boat you haven’t even seen yet._'),
+ L('Top floor. Over the launderette. Machines downstairs’ll shake the whole floor.','WREN'),
+ L('_She describes it too well tonight. Which drawer the spoons go in. Where the oranges sit. Like she’s checking you’ve memorised it._'),
+ CH('',[
+   {label:'“We’ll reach the coast.”',warm:1,set:{promise:1},result:[L('You say it like a promise. Something in her face gives way — grateful, and unbearably sad, though you couldn’t say why. “Yeah,” she says. “We will.”')]},
+   {label:'“Let’s just get through tonight.”',warm:-1,set:{promise:2},result:[L('You keep it practical. One night at a time. She nods, slow. “…Right. Tonight,” and looks back at the candle.')]},
+   {silence:true,set:{promise:0},result:[L('_You don’t answer. The dream hangs there, unfinished, and you let it._'),L('After a while she says, mostly to herself, “…Yeah,” and doesn’t say the rest.')]}]),
+ Bt('_Once, surfacing in the night, you feel her fingers on your wrist, counting. You think you dreamed it._',null,1600),
+ {t:'ckpt',k:'sweep'},
+ BG('sweep'),GR(0.62),RN(0.45),SND(()=>playMusic('escape')),
+ L('Back in the city, and it’s changed. Cold light sweeps the wet streets. A scanner ticks, patient.'),
+ L('She goes still beside you. She heard something in the noise. A number. A name. She doesn’t tell you which.'),
+ L('You’ll like the coast.','WREN'),
+ L('_You almost miss it. Not_ we. _You._','',1000),
+ L('We’ll like the coast.','YOU'),
+ L('_She squeezes your hand. She doesn’t correct herself. She doesn’t say it again._'),
+ BG('drone'),
+ L('The sweep breaks the street into running. A scanner-drone slides out over the crowd, its light coming down through the rain like a held breath.'),
+ L('_It hunts by sound. A voice in the open is a name on a list, and she is already on it._'),
+ BG('sayname'),
+ L('The crowd takes her. Twenty feet of strangers, and every second more — she’s being carried the wrong way, toward the checkpoint end of the street.'),
+ L('You see her hand up over the heads, reaching, turning, looking for you in the wrong direction. She can’t find you.'),
+ L('_One word would turn her around. One word is also the thing the drone is listening for._'),
+ PAUSE(1200),
+ CH('She’s about to be swept past you. Voices are how they find people.',[
+   {label:'Call her name.',warm:1,set:{called:1},result:[L('You shout it — raw, over everyone. For one second her eyes find yours and the street falls away. Then the drone turns, slow, toward the sound.')]},
+   {label:'Stay silent.',warm:-1,set:{called:2},result:[L('You clamp it down. You don’t give them your voice. You push toward her with your hands, not your mouth. She sees you not-call, and understands.')]},
+   {silence:true,set:{called:0},result:[L('_You open your mouth and nothing comes in time; the crowd shoves, the second passes._'),L('When it clears she’s already fought her way back to you, breathing hard, not asking why you didn’t call.')]}]),
+ L('_You find each other. You hold on. You’re both still here._'),
+ L('_You run the last of it together — down through the drowned streets, toward the smell of salt and diesel. Behind you the checkpoints are closing one by one, like doors down a long hallway. Ahead: the water._'),
+ PAUSE(1300),
+ BG('door'),GR(0.7),RN(0.4),SND(()=>motif(false)),
+ L('The water’s edge. A gate — the last one — and past it, pale light. The ferry. The way out. The coast is real; it’s right there.'),
+ L('For a moment it’s almost funny. You’re going to make it. You almost laugh. She doesn’t.'),
+ L('She turns you by the shoulders, toward the door, and puts herself behind you.'),
+ L('You first. Don’t turn around.','WREN'),
+ CH('',[
+   {label:'Pull her with you.',warm:1,result:[L('You grab her coat and try to take her through. She resists — just for a heartbeat, just enough — and that heartbeat is the one they needed.')]},
+   {label:'Go first, like she asks.',warm:-1,result:[L('You do the hardest thing. You let go of her hand and step through, your back to her, not turning around. Behind you, you hear her breathe out — relief, the sound of a plan working.')]},
+   {silence:true,result:[L('_You freeze at the threshold, unable to choose — and she decides for you, both hands flat on your back, and pushes. You stumble through._')]}]),
+ L('Top floor.','WREN'),L('Over the launderette.','YOU'),L('Good.','WREN'),
+ BG('capture'),GR(0.86),SND(()=>sfx('capture')),
+ L('Through the door. You turn — you always turn — and a uniform has her. The gate is between you now. She’s on the wrong side of it.'),
+ L('She doesn’t fight. She doesn’t call for you. She looks at you across the threshold, in the rain, and she shakes her head.'),
+ L('_Not save me. Not help me. Just: don’t come closer._'),
+ CH('',[
+   {label:'Reach for her.',warm:1,set:{reached:true},bg:'reach',result:[L('Your hand goes out, through the gate, toward her — and it isn’t fast enough. It was never going to be fast enough. She sees you reach, and her face breaks — not fear for herself. Fear you’ll come back.')]},
+   {label:'Stop.',warm:-1,result:[L('You stop. You obey the smallest shake of her head. You stand there, hands at your sides, and let her be taken, because it is what she’s asking of you.')]},
+   {silence:true,result:[L('_You reach — but the gate, the guards, the rain; the moment is already closing. Your hand closes on nothing._'),L('The gate slides shut on the sight of her face, still shaking her head, still telling you to go.')]}]),
+ BG('silence'),GR(0.95),RN(0.3),SND(()=>{}),
+ Bt('_And she’s gone._',null,1600),
+ PAUSE(2000),
+ L('The far side. The ferry. The city pulling away across black water. Then — the sound goes out of the world.'),
+ L('You have the sweeter half of nothing in your hand. You have _“Not yet”_ in your mouth and nowhere to put it.'),
+ CARD('You have all of it. You just don’t have her.',4600),
+ PAUSE(1200),
+
+ /* ---------- ACT 2 : THE MIRROR TURNS ---------- */
+ {t:'ckpt',k:'reveal'},
+ GR(1),
+ SND(()=>playMusic('menu')),
+ {t:'mir',lines:['Stop.','_Not yet._ You have heard that word so many times. It was never yours.','You lived this story once — from the safe side of it.','Now come here. Live it the way she did.','Don’t look away. You owe her that much.']},
+ BG('clinic'),RN(0),SND(()=>{sfx('sting');scoreReveal();playMusic('reveal');}),
+ L('You’re on your knees on a filthy floor, holding someone who isn’t breathing. You know their weight better than your own. Their lips are going blue.'),
+ L('There’s one thing. It isn’t legal. I can’t cure this — I can only move it. Take what’s stopping their heart, and put it into a host. Into you.','DOCTOR'),
+ L('Do it.','YOU (WREN)'),
+ L('Understand me. It doesn’t go away. Whatever’s killing them will kill you instead. Slower — but the same road, the same end.','DOCTOR'),
+ L('Do it.','YOU (WREN)'),
+ L('It marks the host. They hunt the marked. A year, maybe less. Just you, instead of them.','DOCTOR'),
+ Bt('Then it’s me instead of him. Hurry.','YOU (WREN)',1200),
+ L('_It takes. They breathe. And you feel it arrive in you at the same moment — the cold thing that was in them, settling under your skin, beginning its slow work._'),
+ PAUSE(1600),
+ L('_This is the week they will never remember. Their heart had already stopped; they were somewhere with no light in it. You were the one who stayed awake, two fingers on their wrist, counting._'),
+ L('_Later they’ll wake in a room that smells of antiseptic and never ask how they got there. You’ll let them think they were just sick once. You’ll let them keep the gap. It’s the kindest thing you own._'),
+ Bt('_You never tell them. Not that you did it for them. Not that it’s killing you. Neither._',null,1700),
+ BG('wrist'),
+ L('The train again. You reach across and lay your fingers on their wrist — the way you have every hour, for weeks, since the clinic floor taught you a chest can just _stop._'),
+ L('You’re so tired. Not sleepy. Tired the way a candle is tired near the end. So you don’t sleep. You watch them breathe.'),
+ Bt('Hey. Not yet. _Don’t go. Either of us._','WREN',1400),
+ BG('wrenOrange'),
+ L('You peel the orange badly, because your hands don’t do what they used to. You give them the sweeter half.'),
+ L('_You can’t taste it. You haven’t tasted anything in eleven days — the mark took that first. The sweet half was the only thing you had left that you could still give them._'),
+ DYN(s=>s.orangeLeft?Bt('_And they set it down on the ledge, half-eaten. You watch the last sweet thing you had to offer dry out by the window, and you say nothing — because how could you, without telling them everything._',null,2000):L('_They eat it, and tell you it’s good, and it is the closest thing to sweetness you have left._')),
+ BG('wrenMap'),
+ L('You describe the flat. The radiator. The drawer for the spoons. You’re not dreaming. You’re drawing a map.'),
+ Bt('_You will not be in that flat. You need them to be able to find it without you — so it feels like home instead of the place they ended up alone._',null,1700),
+ DYN(s=>BG(s.apart?'apart':'checkpoint',false)),GR(0.85),
+ DYN(s=>s.letGo
+   ?L('_At the checkpoint, they let go the moment you asked. And you thought: good. They can do it. They’ll be able to do it when it counts. It was the loneliest, most necessary thing you ever felt._')
+   :L('_At the checkpoint, the light swept your joined hands, and you knew to let go, and you didn’t — because their hand was shaking, and you could not be the one to let go first. You weren’t afraid for yourself. You’re already gone. You were afraid they’d be taken with you._')),
+ BG('station'),GR(0.6),
+ L('_They asked why you took the mark. You almost said it — because you were dying. You said “before I knew better” instead._'),
+ Bt('_You let them be a little angry with you, because anger is lighter to carry than the truth. You have two secrets. You’ll take both to the gate._',null,1700),
+ BG('hideout'),GR(0.55),RN(0.10),
+ L('The room with the candle. They fall asleep against your shoulder mid-sentence, the way they always do.'),
+ L('_You don’t sleep. Sleep costs hours, and you are down to counting them._'),
+ L('_So you spend the night on the only thing left on your list: memorising. The weight of their head. The rain on the roof. The exact warmth of them through two coats._'),
+ DYN(s=>s.promise===1
+   ?L('_“We’ll reach the coast,” they said that night, like a promise. And you said “Yeah. We will.” It is the only lie you never once regretted._')
+   :(s.promise===2
+     ?L('_“Let’s just get through tonight,” they said. You were glad of the dark then — so they couldn’t see your face. Tonight was all you had._')
+     :L('_They never answered you about the coast. The dream just hung there. So you listened to the rain instead, and let it say the rest._'))),
+ Bt('_The candle gets shorter. So do you. You stay awake anyway — there will be so much time to sleep, after._',null,2100),
+ BG('sweep'),GR(0.7),RN(0.45),
+ L('_The cold light comes back over the streets, and you hear it: a number, then a name. Yours. They are close now — closer than you let them see on your face._'),
+ L('_You say “you’ll like the coast,” and hear the mistake as it leaves you — not_ we. _You don’t correct it. Correcting it would mean explaining it._'),
+ Bt('_They squeeze your hand and say “we.” You let them keep the word. It costs them nothing and it is all you have left to give._',null,1800),
+ BG('drone'),GR(0.75),
+ L('_Then the street breaks into running, and the light comes down through the rain, listening._'),
+ BG('sayname'),
+ L('_The crowd takes them from you._'),
+ L('_You go the wrong way — carried, fighting it, your hand up over the strangers’ heads. You are so tired. The mark has been eating your strength for weeks and this is the night it decides to collect._'),
+ DYN(s=>s.called===1
+   ?[L('_And then you hear it. Your name, in their voice, raw over everyone._'),
+     Bt('_It is the most beautiful and most stupid sound in the world. The drone turns toward it. You would not trade it for a year of breathing._',null,2000),
+     L('_You fight your way back to them with the last good strength you will ever have. Worth it. Every second of it, worth it._')]
+   :(s.called===2
+     ?[L('_And they don’t call. You watch them not-call — watch them swallow your name whole to keep you alive._'),
+       Bt('_Good, you think, and it guts you. They can do it. They are learning to survive me. That is exactly what I wanted, and I have never wanted anything less._',null,2200),
+       L('_You fight your way back to them anyway. They hold you like they are apologising for something. You don’t let them say it._')]
+     :[L('_And nothing comes. The crowd shoves; the second closes over you both._'),
+       Bt('_You never ask why they didn’t call. You already know: they froze. So did you, once, on a clinic floor, while a doctor asked if you were sure._',null,2100),
+       L('_You fight your way back to them. Neither of you says anything about it. Some silences are shared property._')])),
+ BG('wrenDoor'),GR(0.8),
+ L('The gate. You turn them toward it and put yourself behind, the way you always put yourself behind.'),
+ L('_You were never getting through that door. Not because of the guards — because of the clock in your blood. Being taken is almost a kindness: they go through clean, and they never have to watch you fold up on a wet pier._'),
+ CARD('_Go. Please go. Make it mean something._',4600),
+ SND(()=>playMusic('menu')),
+ {t:'mir',lines:['…That’s all of it. That is everything she never let you see.','She carried it the whole way, so you wouldn’t have to.','Come back through now. Back to your side of the glass.','There is one door left. It only opens from your side.']},
+
+ /* ---------- ENDING ---------- */
+ DYN(()=>chooseEnding())
+];}
+/* ===== DEV SHORTCUTS — press D in game, or add ?dev to the address ===== */
+function devShowCard(){window._devMode=true;const c=document.getElementById('card');
+  c.style.transition='none';c.style.display='flex';c.style.opacity='1';c.style.background='rgba(2,2,6,.88)';
+  void c.offsetWidth;setTimeout(()=>{c.style.transition='opacity 1.3s';},60);}
+function devJump(which){try{
+  stopPulseSound();hushRain(600);if(musicEl)fadeAudio(musicEl,0,600);
+  const c0=document.getElementById('card');if(c0){c0.onclick=null;c0.style.display='none';c0.style.opacity=0;}
+  document.getElementById('archive').style.display='none';
+  document.getElementById('setPanel').style.display='none';
+  document.getElementById('opening').style.display='none';
+  document.getElementById('cap').style.display='none';
+  document.getElementById('barTop').style.display='none';document.getElementById('barBot').style.display='none';
+  try{initAudio();}catch(e){}
+  if(which==='pulse'||which==='partner'||which==='tip'||which==='shelf'||which==='stats'){
+    if(!REC.length){REC=[{sig:'Leave your hand',label:'Leave your hand where it is',warm:1},{sig:'Eat it. Tell her',label:'Eat it. Tell her it’s good.',warm:1},
+      {sig:'Hold on.',label:'Hold on. “We don’t split up.”',warm:1},{sig:'Call her name',label:'Call her name.',warm:1},
+      {sig:'Pull her with you',label:'Pull her with you.',warm:1},{sig:'Reach for her',label:'Reach for her.',warm:1}];
+      S.warmth=4;S.reached=true;S.promise=1;}
+    if(which==='stats'){runResults();return;}
+    const p=pulseRead();addCollected(p.key);
+    if(which==='pulse'){runResultsPulseOnly(p);}
+    else if(which==='partner')showPartner(p);
+    else if(which==='tip')showTip(p);
+    else showShelf(p);
+    devShowCard();
+    return;}
+  /* jump into the REAL story at a checkpoint and keep playing */
+  if(which.indexOf('scene:')===0){
+    const ck=which.split(':')[1];
+    document.getElementById('card').style.display='none';
+    if(!REC.length){S.warmth=3;S.reached=true;S.promise=1;S.called=1;S.orangeLeft=false;S.apart=false;S.letGo=false;}
+    if(rainEl2)fadeAudio(rainEl2,0.16*PREFS.rv,1200);
+    LOADCK=ck;startStory();return;}
+  if(which==='mirrorMid'){document.getElementById('card').style.display='none';
+    mirrorCut(['Stop.','_Not yet._ You have heard that word so many times. It was never yours.','You lived this story once — from the safe side of it.','Now come here. Live it the way she did.','Don’t look away. You owe her that much.'],
+      ()=>{document.getElementById('cap').style.display='block';setBG('clinic',false);});return;}
+  if(which==='mirrorEnd'){document.getElementById('card').style.display='none';
+    mirrorCut(['…That’s all of it. That is everything she never let you see.','She carried it the whole way, so you wouldn’t have to.','Come back through now. Back to your side of the glass.','There is one door left. It only opens from your side.'],
+      ()=>{document.getElementById('cap').style.display='block';});return;}
+  if(which==='mirrorFin'){document.getElementById('card').style.display='none';
+    mirrorFinale(['You stayed. Nearly every time. You’d rather be ruined together than safe apart.',
+      'She bought you a year. Then she bought you a life. Go and be bored with it — that’s the only thank-you she ever wanted.',
+      (NAME&&NAME!=='YOU')?('…'+NAME+'. There you are. I told you I would keep it.'):'…There you are.'],null);return;}
+  if(which==='archive'){openArchive();return;}
+  if(which==='end'){theEnd();return;}
+}catch(err){
+  const c=document.getElementById('card');
+  c.querySelector('.ct').innerHTML='<div style="color:#ff8a8a;font-style:normal;font-family:monospace;font-size:13px;text-align:left">DEV ERROR:<br>'+(err&&err.message?err.message:err)+'<br><br>'+((err&&err.stack)?err.stack.split('\n').slice(0,4).join('<br>'):'')+'</div>';
+  devShowCard();c.onclick=()=>{c.style.opacity=0;setTimeout(()=>c.style.display='none',400);};}
+}
+function runResultsPulseOnly(p){
+  const c=document.getElementById('card'),ct=c.querySelector('.ct');
+  bgA.classList.remove('on');bgB.classList.remove('on');grade(1);
+  ct.innerHTML='<div style="font-size:11px;letter-spacing:5px;color:#8f81a0;margin-bottom:6px">HOLD STILL. THE MIRROR TAKES YOUR</div>'
+   +'<div style="font-size:22px;letter-spacing:9px;color:'+(PCOL[p.key]||PCOL.RUN)[0]+';font-style:normal;margin-bottom:8px;text-shadow:0 0 20px '+(PCOL[p.key]||PCOL.RUN)[1]+'.6)">P U L S E</div>'
+   +'<div style="font-size:11px;letter-spacing:4px;color:#7d7290;margin-bottom:14px;font-style:italic">listen carefully — this one is yours</div>'
+   +'<canvas id="pulseCv" width="640" height="150" style="width:min(640px,84vw);height:auto;border-radius:10px;border:1px solid '+(PCOL[p.key]||PCOL.RUN)[1]+'.35);background:rgba(8,6,14,.72);margin-bottom:14px"></canvas>'
+   +'<div style="font-size:26px;letter-spacing:3px;margin-bottom:6px;color:#ffd7e8">'+p.name+'</div>'
+   +'<div style="font-size:13px;color:#9fb8c8;margin-bottom:13px">— '+p.tag+' —</div>'
+   +'<div style="font-size:15px;color:#cbb8d6;line-height:1.85">'+p.desc+'</div>'
+   +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:16px">CLICK ▸</div>';
+  c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;
+    const cv=document.getElementById('pulseCv');if(cv)setTimeout(()=>{drawPulse(cv,p.key);startPulseSound(p.key);startPulseMusic();},700);});
+  c.onclick=()=>{c.style.opacity=0;setTimeout(()=>showPartner(p),700);};}
+/* full-screen preview of any pulse pattern */
+const PREVREC={
+ RUN:[1,1,1,1,1,1,1],BREATH:[1,0,1,1,0,1,1],HES:[0.42,1,0.42,1,0.42,1,0.42],
+ COUNT:[0.42,0,0.42,0,0.42,0,0.42],FLAT:[0.42,0.42,0.42,0.42,0.42,0.42,0.42],MISS:[0.42,0,0,0.42,0,0,0.42]};
+function previewPulse(key){
+  stopPulseSound();hushRain(600);if(musicEl)fadeAudio(musicEl,0,600);ensureAudio();
+  document.getElementById('opening').style.display='none';
+  document.getElementById('cap').style.display='none';
+  document.getElementById('barTop').style.display='none';document.getElementById('barBot').style.display='none';
+  REC=PREVREC[key].map(v=>({sig:'x',label:'x',warm:v>0.5?1:0,sil:v===0}));
+  S.reached=(key==='RUN'||key==='HES');S.letGo=(key==='MISS'||key==='FLAT');
+  const t=PATTERNS[key],col=PCOL[key];
+  const c=document.getElementById('card'),ct=c.querySelector('.ct');
+  bgA.classList.remove('on');bgB.classList.remove('on');grade(1);
+  ct.innerHTML='<div style="font-size:11px;letter-spacing:5px;color:#8f81a0;margin-bottom:6px">HOLD STILL. THE MIRROR TAKES YOUR</div>'
+   +'<div style="font-size:22px;letter-spacing:9px;color:'+col[0]+';font-style:normal;margin-bottom:8px;text-shadow:0 0 20px '+col[1]+'.6)">P U L S E</div>'
+   +'<div style="font-size:11px;letter-spacing:4px;color:#7d7290;margin-bottom:14px;font-style:italic">listen carefully — this one is yours</div>'
+   +'<canvas id="pulseCv" width="640" height="150" style="width:min(640px,84vw);height:auto;border-radius:10px;border:1px solid '+col[1]+'.35);background:rgba(8,6,14,.72);box-shadow:0 0 34px '+col[1]+'.18);margin-bottom:14px"></canvas>'
+   +'<div style="font-size:26px;letter-spacing:3px;margin-bottom:6px;color:'+col[0]+'">'+t[0]+'</div>'
+   +'<div style="font-size:13px;color:#9fb8c8;margin-bottom:13px">— '+t[1]+' —</div>'
+   +'<div style="font-size:15px;color:#cbb8d6;line-height:1.85;max-width:640px">'+t[2]+'</div>'
+   +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:16px">CLICK ▸ (next: profile · tips · shelf)</div>';
+  devShowCard();
+  const cv=document.getElementById('pulseCv');if(cv)setTimeout(()=>{drawPulse(cv,key);startPulseSound(key);startPulseMusic();},400);
+  const p=pulseReadFor(key);
+  c.onclick=()=>{stopPulseSound();c.style.opacity=0;setTimeout(()=>{showPartner(p);devShowCard();},500);};}
+/* build a full reading object for any pattern (used by preview + archive) */
+function pulseReadFor(key){const t=PATTERNS[key],mods=[];
+  if(key==='RUN'||key==='HES')mods.push('And at the gate — one last spike, bigger than all the rest. The hand went out. It always would have.');
+  if(key==='MISS'||key==='FLAT')mods.push('There: a skipped beat. Your pulse learned to go quiet exactly when the light passed over it. She taught it that.');
+  return {key:key,name:t[0],tag:t[1],desc:t[2],love:t[3],gift:t[4],cost:t[5],her:t[6],mods:mods};}
+function devPanel(){
+  if(document.getElementById('devP'))return;
+  const d=document.createElement('div');d.id='devP';
+  d.style.cssText='position:fixed;left:12px;bottom:12px;z-index:95;background:rgba(10,8,16,.94);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:11px 13px;font-family:Georgia,serif;font-size:12px;color:#cbb8d6;display:flex;flex-direction:column;gap:7px;max-width:210px';
+  d.innerHTML='<div style="font-size:9px;letter-spacing:3px;color:#8f81a0">DEV SHORTCUTS (press D)</div>'
+   +'<div style="font-size:9px;letter-spacing:3px;color:#7fdcff;margin-top:3px">PLAY REAL STORY FROM…</div>';
+  [['scene:train','▶ Act 1 — the train'],['scene:hideout','▶ the hideout'],['scene:sweep','▶ the sweep / drone'],['scene:reveal','▶ THE REVEAL (mirror→Wren→end)']]
+   .forEach(([k,lab])=>{const b=document.createElement('button');b.className='fbtn';b.textContent=lab;b.style.cssText='font-size:11.5px;color:#9fd8ea';b.onclick=()=>devJump(k);d.appendChild(b);});
+  const sep=document.createElement('div');sep.style.cssText='font-size:9px;letter-spacing:3px;color:#8f81a0;margin-top:4px';sep.textContent='SINGLE SCREENS (previews)';d.appendChild(sep);
+  [['mirrorMid','▸ MIRROR — mid switch (→Wren)'],['mirrorEnd','▸ MIRROR — back to you'],['mirrorFin','▸ MIRROR — final reading'],
+   ['pulse','▸ PULSE reading (+sound)'],['partner','▸ partner profile'],['tip','▸ life tip screen'],['shelf','▸ collection shelf'],['archive','▸ pulse archive'],['stats','▸ full ending sequence'],['end','▸ the end screen']]
+   .forEach(([k,lab])=>{const b=document.createElement('button');b.className='fbtn';b.textContent=lab;b.style.fontSize='11.5px';b.onclick=()=>devJump(k);d.appendChild(b);});
+  const ua=document.createElement('button');ua.className='fbtn';ua.style.fontSize='11.5px';ua.textContent='▸ unlock all 6 pulses';
+  ua.onclick=()=>{try{localStorage.setItem('m_pulses',JSON.stringify(PORDER));
+      if(!localStorage.getItem('m_first')){const dd=new Date();
+        localStorage.setItem('m_first',JSON.stringify({k:'BREATH',name:NAME,date:dd.toLocaleDateString(),time:dd.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}));}
+      localStorage.setItem('m_last','RUN');}catch(e){}
+    document.getElementById('oArch').style.display='block';openArchive();};d.appendChild(ua);
+  const rs=document.createElement('button');rs.className='fbtn';rs.style.fontSize='11.5px';rs.textContent='▸ reset all progress';
+  rs.onclick=()=>{try{['m_pulses','m_first','m_last','m_save','m_tips','m_seen'].forEach(k=>localStorage.removeItem(k));}catch(e){}
+    alert('Progress cleared. Reload to test as a first-time player.');};d.appendChild(rs);
+  const hd=document.createElement('div');hd.style.cssText='font-size:9px;letter-spacing:3px;color:#8f81a0;margin-top:4px';hd.textContent='VIEW + HEAR EACH PULSE';d.appendChild(hd);
+  const rowb=document.createElement('div');rowb.style.cssText='display:flex;flex-wrap:wrap;gap:5px';
+  PORDER.forEach(k=>{const b=document.createElement('button');b.className='fbtn';b.style.cssText='font-size:10px;padding:4px 7px;color:'+PCOL[k][0];
+    b.textContent=PATTERNS[k][0].replace('THE ','');b.onclick=()=>previewPulse(k);rowb.appendChild(b);});
+  d.appendChild(rowb);
+  const st=document.createElement('button');st.className='fbtn';st.style.fontSize='11px';st.textContent='■ stop pulse sound';st.onclick=stopPulseSound;d.appendChild(st);
+  const x=document.createElement('button');x.className='fbtn';x.textContent='× close';x.style.fontSize='11px';x.onclick=()=>{stopPulseSound();d.remove();};d.appendChild(x);
+  document.body.appendChild(d);}
+/* DEV TOOLS: hidden from players. To use them yourself, open the game with ?dev at the end
+   of the address (e.g. MIRRORS_GAME.html?dev) — then a dev button appears bottom-left. */
+if(location.search.indexOf('dev')>-1){
+  document.addEventListener('keydown',e=>{const tg=(e.target||{}).tagName||'';
+    if((e.key==='d'||e.key==='D')&&!/INPUT|TEXTAREA/i.test(tg)){e.preventDefault();devPanel();}},true);
+  const b=document.createElement('button');b.textContent='dev';
+  b.style.cssText='position:fixed;left:10px;bottom:10px;z-index:94;font-family:Georgia;font-size:10px;letter-spacing:2px;color:#6e6280;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 9px;cursor:pointer';
+  b.onclick=()=>{ensureAudio();devPanel();};document.body.appendChild(b);
+  setTimeout(devPanel,400);
+}
+
+function startStory(){document.getElementById('barTop').style.display='block';document.getElementById('barBot').style.display='block';document.getElementById('cap').style.display='block';
+  queue=story();qi=0;
+  if(LOADCK){const ix=queue.findIndex(b=>b.t==='ckpt'&&b.k===LOADCK);if(ix>=0)qi=ix+1;LOADCK=null;}
+  nx();}
+
+/* ===================== BOOT ===================== */
+let loadT=performance.now();
+/* ===================== OPENING (neon mirror — full-screen reversed → zoom-out) ===================== */
+(function(){
+  var wrap=document.getElementById('opening'),c=document.getElementById('oc'),x=c.getContext('2d'),fog=null,fx=null,ot0=performance.now();
+  var W=700,H=520,t=0,last=0,rain=[],city=[],drops=[],spawnT=0,story=false,zoomT=0,dead=false;
+  function size(){W=window.innerWidth;H=window.innerHeight;c.width=W;c.height=H;fog=document.createElement('canvas');fog.width=W;fog.height=H;fx=fog.getContext('2d');}
+  size();window.addEventListener('resize',size);
+  for(var i=0;i<58;i++)rain.push({x:Math.random(),y:Math.random(),v:0.7+Math.random()*0.7,l:0.025+Math.random()*0.04});
+  for(var i=0;i<36;i++)city.push({x:Math.random(),h:0.04+Math.random()*0.08,w:0.02+Math.random()*0.03,c:(Math.random()<0.5?'#49e0ff':'#ff5db1')});
+  for(var i=0;i<46;i++)drops.push({x:Math.random(),y:Math.random(),r:1.5+Math.random()*3,vy:0,tr:[]});
+  function cl(v){return v<0?0:v>1?1:v;}function lerp(a,b,p){return a+(b-a)*p;}function fl(s){return 0.78+0.22*Math.abs(Math.sin(t*s)+Math.sin(t*s*1.7)*0.5);}
+  function rc(X,Y,Wd,Ht,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+Wd,Y,X+Wd,Y+Ht,r);x.arcTo(X+Wd,Y+Ht,X,Y+Ht,r);x.arcTo(X,Y+Ht,X,Y,r);x.arcTo(X,Y,X+Wd,Y,r);x.closePath();}
+  function board(cx,cy,bw,bh,col,al,txt,tsz){x.save();x.globalAlpha=al;x.strokeStyle='rgba(120,132,150,0.4)';x.lineWidth=2;x.beginPath();x.moveTo(cx-bw*0.32,cy-bh/2);x.lineTo(cx-bw*0.32,cy-bh/2-9);x.moveTo(cx+bw*0.32,cy-bh/2);x.lineTo(cx+bw*0.32,cy-bh/2-9);x.stroke();rc(cx-bw/2,cy-bh/2,bw,bh,6);x.fillStyle='rgba(8,10,15,0.92)';x.fill();x.strokeStyle=col;x.shadowColor=col;x.shadowBlur=9*fl(6);x.lineWidth=1.4;x.globalAlpha=al*0.7;x.stroke();x.shadowBlur=0;x.restore();
+    x.save();x.globalAlpha=al;x.font='700 '+tsz+'px Georgia';x.textAlign='center';x.textBaseline='middle';x.shadowColor=col;x.shadowBlur=14*fl(6);x.fillStyle=col;x.fillText(txt,cx,cy);x.shadowBlur=5;x.fillStyle='#f4ffff';x.fillText(txt,cx,cy);x.restore();}
+  function ws(sz,cx,cy){x.save();x.translate(cx,cy);x.scale(-1,1);x.font='700 italic '+sz+'px Georgia';x.textAlign='center';x.textBaseline='middle';x.strokeText('not yet',0,0);x.restore();}
+  function wtf(ctx,sz,cx,cy){ctx.save();ctx.translate(cx,cy);ctx.scale(-1,1);ctx.font='700 italic '+sz+'px Georgia';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('not yet',0,0);ctx.restore();}
+  function bead(px,py,r){var g=x.createRadialGradient(px-r*0.3,py-r*0.35,r*0.1,px,py,r);g.addColorStop(0,'rgba(210,232,248,0.34)');g.addColorStop(.45,'rgba(130,160,185,0.14)');g.addColorStop(.86,'rgba(20,32,45,0.30)');g.addColorStop(1,'rgba(20,32,45,0)');x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill();x.fillStyle='rgba(240,250,255,0.8)';x.beginPath();x.arc(px-r*0.34,py-r*0.36,r*0.2,0,7);x.fill();x.strokeStyle='rgba(200,225,248,0.24)';x.lineWidth=1;x.beginPath();x.arc(px,py,r*0.92,0.35,Math.PI-0.35);x.stroke();}
+  function draw(ts){
+    var dt=Math.min(0.05,(ts-last)/1000||0);last=ts;t+=dt;if(!W||!H){if(!dead)requestAnimationFrame(draw);return;}
+    if(story)zoomT+=dt;var p=story?cl(zoomT/2.6):0,pe=p*p*(3-2*p),room=pe;
+    var wg=x.createLinearGradient(0,0,0,H);wg.addColorStop(0,'#0a0c16');wg.addColorStop(.55,'#070810');wg.addColorStop(1,'#04050b');x.fillStyle=wg;x.fillRect(0,0,W,H);
+    var horizon=H*0.5;
+    if(room>0.02){
+      x.save();x.globalAlpha=0.42*room;for(var i=0;i<city.length;i++){var b=city[i];x.fillStyle='rgba(20,30,48,0.8)';x.fillRect(b.x*W,horizon-b.h*H,b.w*W,b.h*H);for(var wy=horizon-b.h*H+3;wy<horizon-3;wy+=6){if((i+wy)%3===0){x.globalAlpha=0.3*room*fl(5);x.fillStyle=b.c;x.fillRect(b.x*W+2,wy,1.5,2);x.globalAlpha=0.42*room;}}}x.restore();
+      var bx=W*0.70,by=H*0.16,bw=W*0.20,bh=H*0.15;
+      x.save();x.globalAlpha=room;x.fillStyle='rgba(6,9,14,0.92)';x.fillRect(bx,by,bw,bh);
+      x.strokeStyle='rgba(73,224,255,'+(0.55*fl(6))+')';x.shadowColor='#49e0ff';x.shadowBlur=12;x.lineWidth=1.5;x.strokeRect(bx,by,bw,bh);x.shadowBlur=0;
+      var d=new Date(),hh=(d.getHours()<10?'0':'')+d.getHours(),mm=(d.getMinutes()<10?'0':'')+d.getMinutes(),col=(d.getSeconds()%2===0)?':':' ';
+      x.font='700 '+Math.round(bh*0.42)+'px "Courier New",monospace';x.textAlign='center';x.textBaseline='middle';
+      x.shadowColor='#49e0ff';x.shadowBlur=15*fl(6);x.fillStyle='#7ff0ff';x.fillText(hh+col+mm,bx+bw/2,by+bh*0.42);
+      x.shadowBlur=4;x.fillStyle='#eaffff';x.fillText(hh+col+mm,bx+bw/2,by+bh*0.42);x.shadowBlur=0;
+      x.font='700 '+Math.round(bh*0.13)+'px "Courier New",monospace';x.fillStyle='rgba(120,230,255,0.7)';x.fillText('L O C A L   T I M E',bx+bw/2,by+bh*0.78);
+      for(var sl=0;sl<bh;sl+=4){x.fillStyle='rgba(0,0,0,0.10)';x.fillRect(bx,by+sl,bw,1);}x.restore();
+      var fY=H*0.80;x.save();x.globalAlpha=0.4*room;x.strokeStyle='rgba(73,224,255,0.18)';x.lineWidth=1;for(var gi=0;gi<8;gi++){var gy=fY+(gi*gi)*4;if(gy>H)break;x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}for(var gj=-6;gj<=6;gj++){x.beginPath();x.moveTo(W/2,fY);x.lineTo(W/2+gj*W*0.16,H);x.stroke();}x.restore();
+      for(var i=0;i<rain.length;i++){var r=rain[i];r.y+=r.v*dt;if(r.y>1.05){r.y=-0.05;r.x=Math.random();}x.strokeStyle='rgba(150,185,235,'+(0.11*room)+')';x.lineWidth=1;x.beginPath();x.moveTo(r.x*W,r.y*H);x.lineTo(r.x*W-4,r.y*H+r.l*H);x.stroke();}
+      x.save();x.globalCompositeOperation='lighter';var hz=x.createRadialGradient(W*0.13,H*0.5,10,W*0.13,H*0.5,W*0.25);hz.addColorStop(0,'rgba(255,93,177,'+(0.05*room)+')');hz.addColorStop(1,'rgba(255,93,177,0)');x.fillStyle=hz;x.fillRect(0,0,W,H);var hz2=x.createRadialGradient(W*0.82,H*0.28,10,W*0.82,H*0.28,W*0.25);hz2.addColorStop(0,'rgba(73,224,255,'+(0.05*room)+')');hz2.addColorStop(1,'rgba(73,224,255,0)');x.fillStyle=hz2;x.fillRect(0,0,W,H);x.restore();
+      board(W*0.5,H*0.075,180,34,'#49e0ff',room,'M I R R O R S',22);
+      board(W*0.10,H*0.40,60,60,'#ff5db1',room,'鏡',40);
+      board(W*0.11,H*0.14,52,30,'#ff56d0',room,'24H',18);
+      x.save();x.globalAlpha=room;x.strokeStyle='rgba(73,224,255,'+(0.5*fl(6))+')';x.lineWidth=3;x.shadowColor='#49e0ff';x.shadowBlur=10;x.beginPath();x.moveTo(W*0.05,H*0.56);x.lineTo(W*0.05,H*0.74);x.stroke();x.beginPath();x.moveTo(W*0.95,H*0.5);x.lineTo(W*0.95,H*0.74);x.stroke();x.restore();
+      x.save();x.globalCompositeOperation='lighter';function fr(px,col2,w2){var g=x.createLinearGradient(px,fY,px,H);g.addColorStop(0,col2);g.addColorStop(1,'rgba(0,0,0,0)');x.globalAlpha=0.18*room;x.fillStyle=g;x.fillRect(px-w2,fY,w2*2,H-fY);}fr(W*0.5,'rgba(73,224,255,0.6)',90);fr(W*0.10,'rgba(255,93,177,0.6)',24);fr(W*0.80,'rgba(73,224,255,0.5)',40);x.restore();x.globalAlpha=1;
+    }
+    var mw=lerp(W,W*0.34,pe),mh=lerp(H,H*0.58,pe),rx=W/2-mw/2,ry=lerp(0,H*0.14,pe),R=lerp(0,12,pe),f1=fl(6),f2=fl(9);
+    if(room>0.03){x.save();x.globalAlpha=room;x.shadowColor='#49e0ff';x.shadowBlur=28*f1;rc(rx-9,ry-9,mw+18,mh+18,R+6);x.strokeStyle='rgba(90,222,255,'+(0.85*f1)+')';x.lineWidth=3;x.stroke();x.restore();
+      x.save();x.globalAlpha=room;x.shadowColor='#ff5db1';x.shadowBlur=15*f2;rc(rx-4,ry-4,mw+8,mh+8,R+3);x.strokeStyle='rgba(255,110,190,'+(0.5*f2)+')';x.lineWidth=1.5;x.stroke();x.restore();
+      x.save();x.globalAlpha=room;rc(rx-9,ry-9,mw+18,mh+18,R+6);var fgr=x.createLinearGradient(rx,0,rx+mw,0);fgr.addColorStop(0,'#171a22');fgr.addColorStop(.5,'#2b313a');fgr.addColorStop(1,'#12141a');x.fillStyle=fgr;x.fill();rc(rx-3,ry-3,mw+6,mh+6,R+3);x.fillStyle='#04060b';x.fill();x.restore();}
+    x.save();rc(rx,ry,mw,mh,R);x.clip();
+    var gg=x.createLinearGradient(0,ry,0,ry+mh);gg.addColorStop(0,'#1c2c40');gg.addColorStop(.5,'#111f2e');gg.addColorStop(1,'#0e1826');x.fillStyle=gg;x.fillRect(rx-14,ry-14,mw+28,mh+28);
+    x.globalCompositeOperation='lighter';var rBase=0.10+0.14*room;
+    var rT=x.createRadialGradient(rx+mw*0.5,ry+mh*0.13,4,rx+mw*0.5,ry+mh*0.13,mw*0.85);rT.addColorStop(0,'rgba(73,224,255,'+(rBase*f1)+')');rT.addColorStop(1,'rgba(73,224,255,0)');x.fillStyle=rT;x.fillRect(rx,ry,mw,mh);
+    var rP=x.createRadialGradient(rx+mw*0.2,ry+mh*0.4,4,rx+mw*0.2,ry+mh*0.4,mw*0.7);rP.addColorStop(0,'rgba(255,93,177,'+(0.12*room*f2)+')');rP.addColorStop(1,'rgba(255,93,177,0)');x.fillStyle=rP;x.fillRect(rx,ry,mw,mh);
+    var rTl=x.createRadialGradient(rx+mw*0.82,ry+mh*0.32,4,rx+mw*0.82,ry+mh*0.32,mw*0.6);rTl.addColorStop(0,'rgba(73,224,255,'+(0.09*room*f2)+')');rTl.addColorStop(1,'rgba(73,224,255,0)');x.fillStyle=rTl;x.fillRect(rx,ry,mw,mh);
+    var rFl=x.createLinearGradient(0,ry+mh,0,ry+mh*0.7);rFl.addColorStop(0,'rgba(73,200,235,'+(0.10*room)+')');rFl.addColorStop(1,'rgba(73,200,235,0)');x.fillStyle=rFl;x.fillRect(rx,ry,mw,mh);
+    x.globalCompositeOperation='source-over';
+    var sg=x.createLinearGradient(rx,ry,rx+mw,ry+mh);sg.addColorStop(.2,'rgba(255,255,255,0)');sg.addColorStop(.5,'rgba(220,240,255,'+(0.09+0.05*room)+')');sg.addColorStop(.8,'rgba(255,255,255,0)');x.fillStyle=sg;x.fillRect(rx,ry,mw,mh);
+    var fogA=lerp(0.28,0.09,pe),breathe=0.45+0.35*Math.sin(t*0.8),sz=Math.round(lerp(Math.min(W,H)*0.17,mw*0.26,pe)),cyR=lerp(H*0.40,ry+mh*0.58,pe);
+    fx.clearRect(0,0,W,H);fx.fillStyle='rgba(10,16,24,'+fogA+')';fx.fillRect(0,0,W,H);fx.globalCompositeOperation='destination-out';fx.globalAlpha=breathe;fx.fillStyle='#000';wtf(fx,sz,W/2,cyR);fx.globalAlpha=1;fx.globalCompositeOperation='source-over';
+    if(fog&&fog.width===W)x.drawImage(fog,0,0);
+    x.save();x.globalAlpha=breathe*0.8;x.lineWidth=1.5;x.strokeStyle='rgba(205,247,254,0.85)';x.shadowColor='#8fe6ff';x.shadowBlur=6;ws(sz,W/2,cyR);x.restore();
+    spawnT-=dt;if(spawnT<=0){spawnT=0.4+Math.random()*0.5;if(drops.length<74)drops.push({x:Math.random(),y:-0.02,r:3+Math.random()*3.5,vy:0.05+Math.random()*0.06,tr:[]});}
+    var dscale=lerp(1,0.62,pe);
+    for(var di=drops.length-1;di>=0;di--){var dp=drops[di];if(dp.vy>0){dp.vy+=0.03*dt;dp.y+=dp.vy*dt;if(Math.random()<0.2)dp.tr.push({y:dp.y,r:dp.r*0.4,a:0.5});for(var ti=dp.tr.length-1;ti>=0;ti--){dp.tr[ti].a-=0.2*dt;if(dp.tr[ti].a<=0)dp.tr.splice(ti,1);}if(dp.y>1.08){drops.splice(di,1);continue;}}
+      for(var ti=0;ti<dp.tr.length;ti++){var tp=dp.tr[ti];x.globalAlpha=tp.a;bead(rx+dp.x*mw,ry+tp.y*mh,tp.r*dscale);}x.globalAlpha=1;bead(rx+dp.x*mw,ry+dp.y*mh,dp.r*dscale);}
+    x.globalAlpha=1;
+    if(room>0.05){x.strokeStyle='rgba(200,230,255,'+(0.2*room)+')';x.lineWidth=2;rc(rx+2,ry+2,mw-4,mh-4,R);x.stroke();}
+    x.restore();
+    var v=x.createRadialGradient(W/2,H*0.42,Math.min(W,H)*0.3,W/2,H/2,Math.max(W,H)*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,'+lerp(0.8,0.58,pe)+')');x.fillStyle=v;x.fillRect(0,0,W,H);
+    if(!dead)requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+  var menu=document.getElementById('oMenu'),line=document.getElementById('oLine'),step=document.getElementById('oStep');
+  function buildLines(){var d=new Date(),h=d.getHours(),m=d.getMinutes();var time=((h%12)||12)+':'+(m<10?'0'+m:m)+(h<12?' a.m.':' p.m.');var wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];var secs=Math.round((performance.now()-ot0)/1000);
+    var out=[],prev=[];try{prev=getCollected();}catch(e){}
+    if(prev.length>0){
+      var fst=null;try{fst=getFirst();}catch(e){}
+      var arSeen=false;try{arSeen=!!localStorage.getItem('m_archseen');}catch(e){}
+      if(fst&&PATTERNS[fst.k])out.push('You again. I still have the first heart you gave me — '+PATTERNS[fst.k][0].toLowerCase()+'. I keep them all.');
+      else out.push('You again. I still have your heartbeat from last time — I keep them all.');
+      if(!arSeen)out.push('I kept a room for them, by the way. It was always here. You simply had no heartbeat in it until tonight. …Go and look.');
+      out.push('So. The same choices, and the same ending you already know? Or are you going to be someone else tonight?');
+      if(prev.length<6)out.push('There are '+(6-prev.length)+' hearts in you I have not heard yet. Go on. Surprise me.');
+      else out.push('You have shown me all six of your hearts. I did not think anyone would come back that many times.');}
+    if(NAME&&NAME!=='YOU')out.push('“'+NAME+'.” …I will keep it. I will say it back to you at the end, so you know I kept it.');
+    return out.concat(['It is '+time+' where you are. '+(h<6?'The good people are asleep.':(h<12?'You have things you are supposed to be doing.':(h<18?'You stepped out of your day to sit with me.':'Late enough that no one expects anything more of you tonight.'))),
+      'A '+wd+'. Nobody remembers a '+wd+'. You will remember this one.',
+      'You have been here about '+secs+' seconds. I have counted every one of them.',
+      'I can’t see your face. I don’t need to. I can see how long you waited before you touched anything.',
+      'You are not going to close this. You already know that. So do I.',
+      'There is a light on somewhere behind you. You will forget to turn it off.',
+      'The others in your house don’t know what you are about to do. Neither do you.',
+      'You came here to feel something. Hold still — I am good at this.',
+      'You think you are the one watching. Look how still you have gone.',
+      'Whatever you choose, I am still here at the end. I am always at the end.']);}
+  var q=[],mtok=0;function shf(a){for(var i=a.length-1;i>0;i--){var j=(Math.random()*(i+1))|0,s=a[i];a[i]=a[j];a[j]=s;}return a;}
+  function murmur(){var my=mtok;if(q.length===0)q=shf(buildLines());var txt=q.shift();line.style.opacity=0;setTimeout(function(){if(my!==mtok)return;line.textContent=txt;line.style.opacity=1;setTimeout(function(){if(my===mtok)murmur();},4800);},900);}
+  try{if(getCollected().length>0){const ar=document.getElementById('oArch');ar.style.display='block';
+    let seenArch=false;try{seenArch=!!localStorage.getItem('m_archseen');}catch(e){}
+    if(!seenArch){ar.classList.add('fresh');ar.textContent='pulse archive ✦';
+      ar.addEventListener('click',()=>{try{localStorage.setItem('m_archseen','1');}catch(e){}
+        ar.classList.remove('fresh');ar.textContent='pulse archive';},{once:true});}
+  }}catch(e){}
+  var nameAsk=document.getElementById('nameAsk'),nameIn=document.getElementById('nameIn'),nameGo=document.getElementById('nameGo');
+  function afterName(){nameAsk.style.opacity=0;setTimeout(function(){nameAsk.style.display='none';},1000);mtok++;murmur();step.style.opacity=1;}
+  function submitName(){var v=(nameIn.value||'').trim();if(v){NAME=v;try{localStorage.setItem('m_name',v);}catch(e){}}afterName();}
+  function begin(skipName){if(story)return;story=true;zoomT=0;menu.style.opacity=0;try{initAudio();setupFileAudio();drone();startScore();}catch(e){}
+    setTimeout(function(){
+      if(skipName===true){mtok++;murmur();step.style.opacity=1;return;}
+      nameAsk.style.display='flex';requestAnimationFrame(function(){nameAsk.style.opacity=1;});
+      try{nameIn.focus();}catch(e){}
+    },2700);}
+  function enter(){if(dead)return;dead=true;mtok++;try{playMusic('music');}catch(e){}wrap.style.opacity=0;setTimeout(function(){wrap.style.display='none';startStory();},1600);}
+  document.getElementById('oStart').addEventListener('click',function(){LOADCK=null;begin(false);});
+  document.getElementById('oLoad').addEventListener('click',function(){
+    var sv=loadState();
+    if(!sv||!sv.ck){mtok++;line.textContent='There is nothing to load. Yet.';line.style.opacity=1;setTimeout(function(){line.style.opacity=0;},2600);return;}
+    NAME=sv.name||NAME;try{Object.assign(S,sv.S||{});}catch(e){}REC=sv.REC||[];LOADCK=sv.ck;begin(true);});
+  document.getElementById('oSet').addEventListener('click',function(){document.getElementById('setPanel').style.display='flex';applyPrefs();});
+  nameGo.addEventListener('click',submitName);
+  nameIn.addEventListener('keydown',function(e){if(e.key==='Enter'){e.stopPropagation();submitName();}});
+  step.addEventListener('click',enter);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&story&&!dead&&step.style.opacity==='1')enter();});
+})();
+</script>
+</body>
+</html>
+<!-- mirrors build -->
+

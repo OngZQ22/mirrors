@@ -1,0 +1,9 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# working files — keep the repo to just the playable game
+audio/originals/
+*.psd
+*.aup3
