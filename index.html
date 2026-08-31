@@ -65,7 +65,9 @@
   #nameGo{font-style:italic;font-size:13px;letter-spacing:3px;color:#8fb0c2;cursor:pointer;padding:8px 18px;border:1px solid rgba(150,185,205,.3);border-radius:8px}
   #nameGo:hover{color:#eaf6fc;border-color:rgba(180,215,235,.6)}
   /* archive */
-  #archive{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(3,4,9,.96);font-family:Georgia,serif}
+  #archive{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(3,4,9,.96);font-family:Georgia,serif;opacity:0;transition:opacity .7s}
+  #archive .ar{transform:translateY(14px);transition:transform .7s}
+  #archive.in{opacity:1}#archive.in .ar{transform:translateY(0)}
   .ar{width:min(660px,94vw);max-height:88vh;overflow:auto;background:#0c0a14;border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:22px 24px}
   .arh{letter-spacing:6px;font-size:13px;color:#ff9ecb;margin-bottom:4px;text-align:center}
   #arCount{text-align:center;font-size:11px;letter-spacing:2px;color:#8f81a0;margin-bottom:16px}
@@ -673,7 +675,7 @@ let PKEY='RUN';
 function ensureAudio(){try{initAudio();if(AC&&AC.state==='suspended')AC.resume();
   if(AC&&master&&master.gain.value<0.3)master.gain.setValueAtTime(sndOn?0.7:0,AC.currentTime);}catch(e){}}
 function pulseBeat(strength,thump){ensureAudio();if(!AC||!sndOn)return;
-  const t0=AC.currentTime,v=Math.min(1,0.85*strength*PREFS.sv);
+  const t0=AC.currentTime,v=Math.min(1.6,1.7*strength*PREFS.sv);
   /* body thump */
   const o=AC.createOscillator(),g=AC.createGain(),lp=AC.createBiquadFilter();
   lp.type='lowpass';lp.frequency.value=thump?260:420;o.type='sine';
@@ -683,14 +685,14 @@ function pulseBeat(strength,thump){ensureAudio();if(!AC||!sndOn)return;
   /* click transient so it cuts through */
   const o2=AC.createOscillator(),g2=AC.createGain();o2.type='triangle';
   o2.frequency.setValueAtTime(thump?190:240,t0);o2.frequency.exponentialRampToValueAtTime(70,t0+0.07);
-  g2.gain.setValueAtTime(0.0001,t0);g2.gain.exponentialRampToValueAtTime(v*0.5,t0+0.006);g2.gain.exponentialRampToValueAtTime(0.0001,t0+0.12);
+  g2.gain.setValueAtTime(0.0001,t0);g2.gain.exponentialRampToValueAtTime(Math.min(1,v*0.62),t0+0.006);g2.gain.exponentialRampToValueAtTime(0.0001,t0+0.12);
   o2.connect(g2);g2.connect(master);o2.start(t0);o2.stop(t0+0.14);}
 const PSOUND={RUN:{bpm:96,s:1.15,skip:0},BREATH:{bpm:58,s:1.0,skip:0},HES:{bpm:74,s:0.72,skip:0.25},
  COUNT:{bpm:54,s:0.6,skip:0},FLAT:{bpm:66,s:0.42,skip:0},MISS:{bpm:48,s:0.55,skip:0.45}};
 function hushRain(ms){if(rainEl2)fadeAudio(rainEl2,0,ms||1500);}
 /* pulse.mp3 — comes in UNDER the heartbeat, then settles to a steady level and stays */
 let pulseMusicEl=null;
-const PM_LOW=0.16,PM_SET=0.34;
+const PM_LOW=0.10,PM_SET=0.34;
 function startPulseMusic(){
   if(pulseMusicEl){fadeAudio(pulseMusicEl,PM_LOW*PREFS.mv,1500);return;}
   tryAudio('audio/pulse.mp3',a=>{a.loop=true;a.volume=0;a.muted=!sndOn;a.play().catch(()=>{});
@@ -870,6 +872,8 @@ function drawMiniPulse(cv,key){
       x.strokeStyle=mc[1]+a+')';x.shadowColor=mc[0];x.shadowBlur=a>0.5?9:0;
       x.beginPath();x.moveTo(pts[i-1][0],pts[i-1][1]);x.lineTo(pts[i][0],pts[i][1]);x.stroke();}
     x.restore();requestAnimationFrame(anim);})();}
+function closeArchive(){const a=document.getElementById('archive');a.classList.remove('in');
+  setTimeout(()=>{if(!a.classList.contains('in'))a.style.display='none';},700);}
 function openArchive(){
   hushRain(1200);if(musicEl&&!window._ended)fadeAudio(musicEl,curMusicBase*PREFS.mv*0.25,1200);
   const got=getCollected(),list=document.getElementById('arList'),first=getFirst(),last=(()=>{try{return localStorage.getItem('m_last');}catch(e){return null;}})();
@@ -895,7 +899,7 @@ function openArchive(){
       +'<div class="apl" style="font-size:10px;letter-spacing:2px;color:#6e6280;margin-top:4px;font-style:normal">'+(has?'♥ CLICK TO LISTEN &nbsp;·&nbsp; ⤢ VIEW':'♥ CLICK TO LISTEN')+'</div>';
     if(has){const vb=document.createElement('button');vb.className='fbtn';vb.textContent='⤢';
       vb.style.cssText='flex:none;font-size:13px;padding:6px 10px;color:'+PCOL[k][0];
-      vb.onclick=e=>{e.stopPropagation();document.getElementById('archive').style.display='none';previewPulse(k);};
+      vb.onclick=e=>{e.stopPropagation();stopPulseSound();cameFromArchive=true;closeArchive();setTimeout(()=>previewPulse(k),450);};
       row.appendChild(vb);}
     row.insertBefore(cv,row.firstChild);row.insertBefore(tx,row.children[1]);list.appendChild(row);
     drawMiniPulse(cv,k);
@@ -904,8 +908,9 @@ function openArchive(){
       if(playing){stopPulseSound();return;}
       startPulseSound(k);row.classList.add('playing');
       const p=tx.querySelector('.apl');p.textContent='♥ BEATING — CLICK TO STOP';p.style.color='#ff9ecb';};});
-  document.getElementById('archive').style.display='flex';}
-document.getElementById('arClose').addEventListener('click',()=>{stopPulseSound();document.getElementById('archive').style.display='none';
+  const arw=document.getElementById('archive');arw.style.display='flex';
+  requestAnimationFrame(()=>{void arw.offsetWidth;arw.classList.add('in');});}
+document.getElementById('arClose').addEventListener('click',()=>{stopPulseSound();closeArchive();
   if(window._ended)return;
   if(rainEl2)fadeAudio(rainEl2,(curRainV2>0?curRainV2*0.22:0.16)*PREFS.rv,1400);
   if(musicEl)fadeAudio(musicEl,curMusicBase*PREFS.mv,1400);});
@@ -1130,7 +1135,7 @@ function devShowCard(){window._devMode=true;const c=document.getElementById('car
 function devJump(which){try{
   stopPulseSound();hushRain(600);if(musicEl)fadeAudio(musicEl,0,600);
   const c0=document.getElementById('card');if(c0){c0.onclick=null;c0.style.display='none';c0.style.opacity=0;}
-  document.getElementById('archive').style.display='none';
+  closeArchive();
   document.getElementById('setPanel').style.display='none';
   document.getElementById('opening').style.display='none';
   document.getElementById('cap').style.display='none';
@@ -1192,7 +1197,9 @@ const PREVREC={
  RUN:[1,1,1,1,1,1,1],BREATH:[1,0,1,1,0,1,1],HES:[0.42,1,0.42,1,0.42,1,0.42],
  COUNT:[0.42,0,0.42,0,0.42,0,0.42],FLAT:[0.42,0.42,0.42,0.42,0.42,0.42,0.42],MISS:[0.42,0,0,0.42,0,0,0.42]};
 function previewPulse(key){
-  stopPulseSound();hushRain(600);if(musicEl)fadeAudio(musicEl,0,600);ensureAudio();
+  stopPulseSound();hushRain(600);if(musicEl&&!window._ended)fadeAudio(musicEl,0,600);ensureAudio();
+  const cardEl=document.getElementById('card');
+  cardEl.style.position='fixed';cardEl.style.zIndex='96';cardEl.style.background='rgba(2,2,6,.95)';
   document.getElementById('opening').style.display='none';
   document.getElementById('cap').style.display='none';
   document.getElementById('barTop').style.display='none';document.getElementById('barBot').style.display='none';
@@ -1208,11 +1215,16 @@ function previewPulse(key){
    +'<div style="font-size:26px;letter-spacing:3px;margin-bottom:6px;color:'+col[0]+'">'+t[0]+'</div>'
    +'<div style="font-size:13px;color:#9fb8c8;margin-bottom:13px">— '+t[1]+' —</div>'
    +'<div style="font-size:15px;color:#cbb8d6;line-height:1.85;max-width:640px">'+t[2]+'</div>'
-   +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:16px">CLICK ▸ (next: profile · tips · shelf)</div>';
+   +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:16px">'+(cameFromArchive?'CLICK ▸ back to archive':'CLICK ▸ (next: profile · tips · shelf)')+'</div>';
   devShowCard();
   const cv=document.getElementById('pulseCv');if(cv)setTimeout(()=>{drawPulse(cv,key);startPulseSound(key);startPulseMusic();},400);
   const p=pulseReadFor(key);
-  c.onclick=()=>{stopPulseSound();c.style.opacity=0;setTimeout(()=>{showPartner(p);devShowCard();},500);};}
+  c.onclick=()=>{stopPulseSound();c.style.opacity=0;
+    setTimeout(()=>{
+      c.style.position='';c.style.zIndex='';c.style.background='';
+      if(cameFromArchive){cameFromArchive=false;c.style.display='none';c.onclick=null;openArchive();}
+      else{showPartner(p);devShowCard();}},500);};}
+let cameFromArchive=false;
 /* build a full reading object for any pattern (used by preview + archive) */
 function pulseReadFor(key){const t=PATTERNS[key],mods=[];
   if(key==='RUN'||key==='HES')mods.push('And at the gate — one last spike, bigger than all the rest. The hand went out. It always would have.');
