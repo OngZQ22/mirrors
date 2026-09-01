@@ -22,8 +22,7 @@ made, and a reading of what you are like to love.
 
 ## Running it locally
 
-Download the folder and open **`index.html`** in any browser. No install, no build step.
-Keep `index.html`, `assets/` and `audio/` together.
+copy and paste the link here : https://ongzq22.github.io/mirrors/
 
 ---
 
