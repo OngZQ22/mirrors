@@ -271,7 +271,7 @@ function applyPrefs(){
   document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('on',b.dataset.f===PREFS.font));
   document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',PREFS[s.dataset.t]===s.dataset.c));
   if(musicEl)musicEl.volume=curMusicBase*PREFS.mv;
-  if(rainEl2)rainEl2.volume=(curRainV2>0?curRainV2*0.22:0.16)*PREFS.rv;
+  if(rainEl2)rainEl2.volume=(curRainV2>0?Math.min(1,0.10+curRainV2*0.75):0.45)*PREFS.rv;
 }
 let paused=false;
 function openSettings(){if(currentHard){taunt();return;}
@@ -302,7 +302,7 @@ document.getElementById('spQuit').addEventListener('click',()=>{
   try{if(musicEl)fadeAudio(musicEl,0,1000);if(rainEl2)fadeAudio(rainEl2,0,1000);}catch(e){}
   setTimeout(()=>location.reload(),1200);});
 document.getElementById('vMus').addEventListener('input',e=>{PREFS.mv=e.target.value/100;if(musicEl)musicEl.volume=curMusicBase*PREFS.mv;savePrefs();});
-document.getElementById('vRain').addEventListener('input',e=>{PREFS.rv=e.target.value/100;if(rainEl2)rainEl2.volume=(curRainV2>0?curRainV2*0.22:0.16)*PREFS.rv;savePrefs();});
+document.getElementById('vRain').addEventListener('input',e=>{PREFS.rv=e.target.value/100;if(rainEl2)rainEl2.volume=(curRainV2>0?Math.min(1,0.10+curRainV2*0.75):0.45)*PREFS.rv;savePrefs();});
 document.getElementById('vSfx').addEventListener('input',e=>{PREFS.sv=e.target.value/100;savePrefs();});
 document.querySelectorAll('.fbtn').forEach(b=>b.addEventListener('click',()=>{PREFS.font=b.dataset.f;applyPrefs();savePrefs();}));
 document.querySelectorAll('.sw').forEach(s=>s.addEventListener('click',()=>{PREFS[s.dataset.t]=s.dataset.c;applyPrefs();savePrefs();}));
@@ -354,12 +354,12 @@ function setupFileAudio(){
 /* rain starts as early as the browser allows — before "start game" if possible */
 function startRainEarly(){tryAudio('audio/rain.mp3',a=>{a.loop=true;a.volume=0;rainEl2=a;a.muted=!sndOn;
   a.setAttribute('playsinline','');
-  const ok=()=>fadeAudio(a,0.16*PREFS.rv,2200);
+  const ok=()=>fadeAudio(a,0.45*PREFS.rv,2200);
   const EV=['pointerdown','pointermove','mousemove','keydown','touchstart','wheel','scroll','click'];
   const arm=()=>{EV.forEach(e=>document.removeEventListener(e,arm,true));a.play().then(ok).catch(()=>{});};
   a.play().then(ok).catch(()=>{EV.forEach(e=>document.addEventListener(e,arm,true));});});}
 startRainEarly();
-function setRainFile(v){curRainV2=v;if(rainEl2)fadeAudio(rainEl2,v*0.22*PREFS.rv,1600);}
+function setRainFile(v){curRainV2=v;if(rainEl2)fadeAudio(rainEl2,Math.min(1,(0.10+v*0.75))*PREFS.rv,1600);}
 function stopMusicSoft(){if(musicEl){const old=musicEl;musicEl=null;fadeAudio(old,0,2400);setTimeout(()=>{try{old.pause();}catch(e){}},2500);}fileMusicActive=true;}
 function playMusic(name){tryAudio('audio/'+name+'.mp3',a=>{a.loop=true;a.volume=0;a.muted=!sndOn;a.play().catch(()=>{});const old=musicEl;musicEl=a;fileMusicActive=true;try{fadeScoreForFile();}catch(e){}curMusicBase=(name==='escape')?0.5:0.35;fadeAudio(a,curMusicBase*PREFS.mv,2200);if(old){fadeAudio(old,0,1800);setTimeout(()=>{try{old.pause();}catch(e){}},1900);}});}
 function sfx(name){if(!sndOn)return;try{const a=new Audio('audio/'+name+'.mp3');a.volume=Math.min(1,0.6*PREFS.sv);a.play().catch(()=>{});}catch(e){}}
@@ -498,9 +498,13 @@ function mirrorCut(lines,done){
   document.getElementById('cap').style.display='none';
   mirrorOn=true;finalMode=true;msize();mdraw();mline.textContent='';
   requestAnimationFrame(()=>m.style.opacity=1);
-  let i=0;const my=++mTok;
+  let i=0;const my=++mTok;let stepT=null;
+  /* click anywhere on the mirror to move to the next line */
+  m.style.cursor='pointer';
+  m.onclick=()=>{if(my!==mTok)return;clearTimeout(stepT);mline.style.opacity=0;setTimeout(()=>{if(my===mTok)step();},260);};
   function step(){
-    if(i>=lines.length){
+    clearTimeout(stepT);
+    if(i>=lines.length){m.onclick=null;m.style.cursor='';
       /* gentle glass-light flash: soft, blue-white, slow bloom */
       const fl=document.createElement('div');fl.style.cssText='position:fixed;inset:0;background:radial-gradient(circle at 50% 45%, rgba(235,245,255,.95), rgba(190,215,235,.75) 55%, rgba(140,175,205,.5));z-index:99;opacity:0;transition:opacity .6s ease-in;pointer-events:none';document.body.appendChild(fl);
       requestAnimationFrame(()=>fl.style.opacity=0.55);
@@ -508,7 +512,8 @@ function mirrorCut(lines,done){
         fl.style.transition='opacity 1.6s ease-out';fl.style.opacity=0;setTimeout(()=>fl.remove(),1700);done();},700);
       return;}
     const t=lines[i++];mline.style.opacity=0;
-    setTimeout(()=>{if(my!==mTok)return;mline.innerHTML=esc(t);mline.style.opacity=1;setTimeout(step,Math.max(3200,t.length*75));},850);}
+    setTimeout(()=>{if(my!==mTok)return;mline.innerHTML=esc(t);mline.style.opacity=1;
+      stepT=setTimeout(step,Math.max(3200,t.length*75));},850);}
   setTimeout(step,1400);
 }
 
@@ -518,11 +523,15 @@ function mirrorFinale(lines,done){
   document.getElementById('cap').style.display='none';document.getElementById('barTop').style.display='none';document.getElementById('barBot').style.display='none';
   mirrorOn=true;finalMode=true;msize();mdraw();mline.textContent='';
   requestAnimationFrame(()=>m.style.opacity=1);
-  let i=0;const my=++mTok;
-  function step(){if(i>=lines.length){
+  let i=0;const my=++mTok;let finT=null;
+  m.style.cursor='pointer';
+  m.onclick=()=>{if(my!==mTok)return;clearTimeout(finT);mline.style.opacity=0;setTimeout(()=>{if(my===mTok)step();},260);};
+  function step(){clearTimeout(finT);
+    if(i>=lines.length){m.onclick=null;m.style.cursor='';
       if(done){setTimeout(()=>{mline.style.opacity=0;setTimeout(done,1200);},1500);return;}
       setTimeout(()=>{mline.style.opacity=0;setTimeout(()=>{mline.innerHTML='<span style="font-size:15px;letter-spacing:5px;opacity:.7">the end</span>';mline.style.opacity=1;fadeOutAll();},1400);},1600);return;}
-    const t=lines[i++];mline.style.opacity=0;setTimeout(()=>{if(my!==mTok)return;mline.innerHTML=esc(t);mline.style.opacity=1;setTimeout(step,Math.max(3400,t.length*85));},900);}
+    const t=lines[i++];mline.style.opacity=0;setTimeout(()=>{if(my!==mTok)return;mline.innerHTML=esc(t);mline.style.opacity=1;
+      finT=setTimeout(step,Math.max(3400,t.length*85));},900);}
   setTimeout(step,1800);
 }
 
@@ -913,6 +922,38 @@ function runResults(){
       c.onclick=()=>{c.style.opacity=0;setTimeout(()=>showPartner(p),700);};
     }}
   setTimeout(showNext,1800);}
+/* a small back link for the result screens */
+function backBtn(fn){
+  const c=document.getElementById('card');
+  let b=document.getElementById('cardBack');
+  if(!b){b=document.createElement('div');b.id='cardBack';
+    b.style.cssText='position:absolute;left:26px;top:22px;z-index:5;font-family:Georgia,serif;font-style:italic;'
+      +'font-size:12.5px;letter-spacing:2px;color:#8a7f9e;cursor:pointer;padding:8px 14px;border-radius:8px;'
+      +'border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);transition:.25s';
+    b.textContent='◂ back';
+    b.onmouseenter=()=>{b.style.color='#eee6f6';b.style.borderColor='rgba(255,158,203,.6)';};
+    b.onmouseleave=()=>{b.style.color='#8a7f9e';b.style.borderColor='rgba(255,255,255,.16)';};
+    c.appendChild(b);}
+  b.style.display=fn?'block':'none';
+  b.onclick=e=>{e.stopPropagation();if(fn)fn();};
+  return b;}
+function hideBack(){const b=document.getElementById('cardBack');if(b)b.style.display='none';}
+/* the pulse screen, reachable again via back */
+function showPulseAgain(p){
+  const c=document.getElementById('card'),ct=c.querySelector('.ct');
+  const col=PCOL[p.key]||PCOL.RUN;
+  ct.innerHTML='<div style="font-size:11px;letter-spacing:5px;color:#8f81a0;margin-bottom:6px">HOLD STILL. THE MIRROR TAKES YOUR</div>'
+   +'<div style="font-size:22px;letter-spacing:9px;color:'+col[0]+';font-style:normal;margin-bottom:8px;text-shadow:0 0 20px '+col[1]+'.6)">P U L S E</div>'
+   +'<div style="font-size:11px;letter-spacing:4px;color:#7d7290;margin-bottom:14px;font-style:italic">listen carefully — this one is yours</div>'
+   +'<canvas id="pulseCv" width="640" height="150" style="width:min(640px,84vw);height:auto;border-radius:10px;border:1px solid '+col[1]+'.35);background:rgba(8,6,14,.72);margin-bottom:14px"></canvas>'
+   +'<div style="font-size:26px;letter-spacing:3px;margin-bottom:6px;color:'+col[0]+'">'+p.name+'</div>'
+   +'<div style="font-size:13px;color:#9fb8c8;margin-bottom:13px">— '+p.tag+' —</div>'
+   +'<div style="font-size:15px;color:#cbb8d6;line-height:1.85;max-width:640px">'+p.desc+'</div>'
+   +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:16px">CLICK ▸</div>';
+  hideBack();
+  c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;
+    const cv=document.getElementById('pulseCv');if(cv)setTimeout(()=>{drawPulse(cv,p.key);startPulseSound(p.key);startPulseMusic();},400);});
+  c.onclick=()=>{c.style.opacity=0;stopPulseSound();setTimeout(()=>showPartner(p),600);};}
 /* what kind of partner are you */
 function showPartner(p){
   stopPulseSound();pulseMusicSettle();
@@ -927,6 +968,7 @@ function showPartner(p){
    +row('WHAT YOUR PARTNER NEEDED','“'+p.her+'”','#ff9ecb')
    +'</div>'
    +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:6px">CLICK ▸</div>';
+  backBtn(()=>{c.style.opacity=0;setTimeout(()=>showPulseAgain(p),500);});
   c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;});
   c.onclick=()=>{c.style.opacity=0;setTimeout(()=>{showTip(p);if(window._devMode)devShowCard();},700);};}
 /* the one true thing the mirror gives you to take back with you */
@@ -939,6 +981,7 @@ function showTip(p){
    +'<div style="font-size:13px;color:#9a8fae;font-style:normal;line-height:1.8;max-width:520px">The mirror says this to you, tonight, in this state you are in.<br>Someone else is being told something different. It will be just as true.</div>'
    +(window._devMode?'<div style="margin-top:14px"><button class="fbtn" id="rerollTip" style="font-size:11px">↻ re-roll tips (dev)</button></div>':'')
    +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:20px">CLICK ▸</div>';
+  backBtn(()=>{c.style.opacity=0;setTimeout(()=>{showPartner(p);if(window._devMode)devShowCard();},500);});
   c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;
     const rr=document.getElementById('rerollTip');if(rr)rr.onclick=e=>{e.stopPropagation();showTip(p);devShowCard();};});
   c.onclick=()=>{c.style.opacity=0;setTimeout(()=>{showShelf(p);if(window._devMode)devShowCard();},700);};}
@@ -957,9 +1000,10 @@ function showShelf(p){
    +'<div style="font-size:12.5px;color:#9fb8c8;margin-bottom:18px">Other choices make other hearts. The mirror keeps them all.</div>'
    +'<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:640px">'+cards+'</div>'
    +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:20px">CLICK ▸</div>';
+  backBtn(()=>{c.style.opacity=0;setTimeout(()=>{showTip(p);if(window._devMode)devShowCard();},500);});
   c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;
     document.querySelectorAll('.shcv').forEach(cv=>drawMiniPulse(cv,cv.dataset.k));});
-  c.onclick=()=>{c.style.opacity=0;setTimeout(theEnd,700);};}
+  c.onclick=()=>{c.style.opacity=0;hideBack();setTimeout(theEnd,700);};}
 /* a small idealised heartbeat per pattern, for the archive rows */
 function drawMiniPulse(cv,key){
   const x=cv.getContext('2d'),W=cv.width,H=cv.height,mid=H*0.56;
@@ -1024,7 +1068,7 @@ function openArchive(){
   requestAnimationFrame(()=>{void arw.offsetWidth;arw.classList.add('in');});}
 document.getElementById('arClose').addEventListener('click',()=>{stopPulseSound();closeArchive();
   if(window._ended)return;
-  if(rainEl2)fadeAudio(rainEl2,(curRainV2>0?curRainV2*0.22:0.16)*PREFS.rv,1400);
+  if(rainEl2)fadeAudio(rainEl2,(curRainV2>0?Math.min(1,0.10+curRainV2*0.75):0.45)*PREFS.rv,1400);
   if(musicEl)fadeAudio(musicEl,curMusicBase*PREFS.mv,1400);});
 document.getElementById('oArch').addEventListener('click',openArchive);
 function theEnd(){const c=document.getElementById('card');c.style.display='none';c.onclick=null;
@@ -1035,14 +1079,14 @@ function theEnd(){const c=document.getElementById('card');c.style.display='none'
   d.innerHTML='<div style="font-style:italic;letter-spacing:6px;font-size:15px;color:#8fa8b8">the end</div>'
    /* one fixed slot: the message and the neon cross-fade inside it, so nothing ever moves */
    +'<div style="position:relative;width:100%;height:210px;display:flex;align-items:center;justify-content:center">'
-     +'<div id="endMsg" style="position:absolute;opacity:0;transition:opacity 4s;font-style:italic;font-size:clamp(18px,2.5vw,25px);'
+     +'<div id="endMsg" style="position:absolute;opacity:0;transition:opacity 2.2s;font-style:italic;font-size:clamp(18px,2.5vw,25px);'
      +'color:#ffe9f2;text-align:center;padding:0 8vw;line-height:2;text-shadow:0 0 26px rgba(255,158,203,.35)">'
-     +'Whoever you are, on the other side of the glass —<br><span id="endMsg2" style="opacity:0;transition:opacity 4s">you deserve more than you think you do.</span></div>'
-     +'<div id="endBtns" style="position:absolute;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;opacity:0;transition:opacity 2.4s">'
+     +'Whoever you are, on the other side of the glass —<br><span id="endMsg2" style="opacity:0;transition:opacity 2.2s">you deserve more than you think you do.</span></div>'
+     +'<div id="endBtns" style="position:absolute;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;opacity:0;transition:opacity 1.6s">'
        +'<button class="endb" id="endArch">pulse archive</button>'
        +'<button class="endb pink" id="endAgain">be someone else</button></div>'
    +'</div>'
-   +'<div id="endTease" style="opacity:0;transition:opacity 3.5s;font-style:italic;font-size:12.5px;letter-spacing:1px;'
+   +'<div id="endTease" style="opacity:0;transition:opacity 2s;font-style:italic;font-size:12.5px;letter-spacing:1px;'
    +'color:#6f6485;text-align:center;line-height:1.9;max-width:520px;padding:0 8vw;margin-top:-40px">'
    +'The mirror does not close.<br><span style="color:#8a7f9e">Come back another night — there are other people in here,<br>and none of them are hers.</span></div>';
   document.body.appendChild(d);requestAnimationFrame(()=>d.style.opacity=1);fadeOutAll();
@@ -1050,9 +1094,9 @@ function theEnd(){const c=document.getElementById('card');c.style.display='none'
   setTimeout(()=>{const m=document.getElementById('endMsg2');if(m)m.style.opacity=1;},7600);
   /* the message dissolves, leaving only the choice */
   /* the message dissolves and collapses out of the layout, so the neon sits close under "the end" */
-  setTimeout(()=>{const m=document.getElementById('endMsg');if(m){m.style.transition='opacity 4.5s';m.style.opacity=0;}},11500);
-  setTimeout(()=>{const b=document.getElementById('endBtns');if(b)b.style.opacity=1;},14800);
-  setTimeout(()=>{const t=document.getElementById('endTease');if(t)t.style.opacity=1;},18500);
+  setTimeout(()=>{const m=document.getElementById('endMsg');if(m){m.style.transition='opacity 2.6s';m.style.opacity=0;}},9500);
+  setTimeout(()=>{const b=document.getElementById('endBtns');if(b)b.style.opacity=1;},12300);
+  setTimeout(()=>{const t=document.getElementById('endTease');if(t)t.style.opacity=1;},15000);
   d.querySelector('#endArch').onclick=openArchive;
   d.querySelector('#endAgain').onclick=()=>location.reload();}
 
