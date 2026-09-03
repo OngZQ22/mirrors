@@ -56,8 +56,26 @@
   .sw{width:21px;height:21px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,.15)}
   .sw.on{border-color:#fff}
   .fbtn{font-family:inherit;padding:6px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:#d8cee2;cursor:pointer;font-size:12px}
+  /* neon sign buttons — same language as the mirror's frame */
+  .endb{font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:4px;text-transform:uppercase;
+    color:#a9f0ff;background:rgba(73,224,255,.07);border:1.6px solid #49e0ff;border-radius:10px;
+    padding:13px 26px;cursor:pointer;transition:.3s;
+    text-shadow:0 0 10px #49e0ff,0 0 22px rgba(73,224,255,.6);
+    box-shadow:0 0 16px rgba(73,224,255,.45),inset 0 0 16px rgba(73,224,255,.14);
+    animation:neonHum 3.4s ease-in-out infinite}
+  .endb:hover{color:#eaffff;background:rgba(73,224,255,.16);letter-spacing:5px;
+    box-shadow:0 0 32px rgba(73,224,255,.85),inset 0 0 22px rgba(73,224,255,.25);animation:none}
+  .endb.pink{color:#ffc2e0;background:rgba(255,93,177,.07);border-color:#ff5db1;
+    text-shadow:0 0 10px #ff5db1,0 0 22px rgba(255,93,177,.6);
+    box-shadow:0 0 16px rgba(255,93,177,.45),inset 0 0 16px rgba(255,93,177,.14);animation-delay:1.1s}
+  .endb.pink:hover{color:#fff0f7;background:rgba(255,93,177,.18);
+    box-shadow:0 0 32px rgba(255,93,177,.85),inset 0 0 22px rgba(255,93,177,.25)}
+  @keyframes neonHum{0%,100%{filter:brightness(1)}45%{filter:brightness(1.16)}52%{filter:brightness(.94)}}
   .fbtn.on{border-color:#ffb14e;color:#ffd08a}
-  #spClose{margin-top:16px;width:100%;padding:9px;border-radius:8px;border:0;background:#ffb14e;color:#120c16;letter-spacing:3px;cursor:pointer;font-family:inherit}
+  #spSave{margin-top:16px;font-size:10.5px;font-style:italic;color:#9a8fae;text-align:center;line-height:1.7;min-height:15px}
+  #spClose{margin-top:10px;width:100%;padding:9px;border-radius:8px;border:0;background:#ffb14e;color:#120c16;letter-spacing:3px;cursor:pointer;font-family:inherit}
+  #spQuit{margin-top:8px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:transparent;color:#9fb8c8;letter-spacing:3px;cursor:pointer;font-family:inherit;font-size:11px}
+  #spQuit:hover{border-color:#ff9ecb;color:#ffd7e8}
   /* name ask */
   #nameAsk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;display:none;flex-direction:column;align-items:center;gap:14px;opacity:0;transition:opacity 1s}
   #nameAsk .nq{font-style:italic;color:#dbe6ee;font-size:18px;text-shadow:0 2px 10px #000}
@@ -95,8 +113,17 @@
   #opening{position:fixed;inset:0;z-index:30;background:#04050a;overflow:hidden;transition:opacity 1.6s}
   #oc{position:absolute;inset:0;width:100%;height:100%}
   #oMenu{position:absolute;left:50%;bottom:11%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:15px;z-index:2;transition:opacity .5s}
-  .omi{font-style:italic;font-size:20px;letter-spacing:3px;color:#8ea3b0;cursor:pointer;transition:.3s;transform:scaleX(-1)}
-  .omi:hover{transform:scaleX(1);color:#eef6fc;text-shadow:0 0 16px rgba(150,210,235,.8)}
+  /* the row is the hover target and never moves — only the inner text flips, so no flicker */
+  .omi{font-style:italic;font-size:20px;letter-spacing:3px;color:#8ea3b0;cursor:pointer;
+       padding:7px 34px;display:block;text-align:center;transition:color .3s,text-shadow .3s}
+  .omi .omt{display:inline-block;transform:scaleX(-1);transition:transform .55s cubic-bezier(.2,.75,.3,1);will-change:transform}
+  .omi:hover{color:#eef6fc;text-shadow:0 0 16px rgba(150,210,235,.8)}
+  .omi:hover .omt{transform:scaleX(1)}
+  /* touch devices have no hover — right the words automatically so they're readable */
+  @media (hover:none),(pointer:coarse){
+    .omi .omt{transform:scaleX(1);transition:transform 1.4s cubic-bezier(.2,.8,.25,1)}
+    #oMenu.mirrored .omt{transform:scaleX(-1)}
+  }
   .omi.fresh{color:#ff9ecb;animation:freshGlow 2.6s ease-in-out infinite}
   @keyframes freshGlow{0%,100%{text-shadow:0 0 10px rgba(255,120,190,.35)}50%{text-shadow:0 0 22px rgba(255,120,190,.85)}}
   #oLine{position:absolute;left:50%;bottom:15%;transform:translateX(-50%);width:min(600px,88%);text-align:center;color:#dbe6ee;font-style:italic;font-size:19px;opacity:0;transition:opacity 1.2s;text-shadow:0 0 20px rgba(120,175,205,.45),0 2px 8px #000;z-index:2}
@@ -135,7 +162,7 @@
 <button id="gear">⚙ settings</button>
 <div id="opening">
   <canvas id="oc"></canvas>
-  <nav id="oMenu"><div class="omi" id="oStart">start game</div><div class="omi" id="oLoad">load game</div><div class="omi" id="oArch" style="display:none">pulse archive</div><div class="omi" id="oSet">settings</div></nav>
+  <nav id="oMenu"><div class="omi" id="oStart"><span class="omt">start game</span></div><div class="omi" id="oLoad"><span class="omt">load game</span></div><div class="omi" id="oArch" style="display:none"><span class="omt">pulse archive</span></div><div class="omi" id="oSet"><span class="omt">settings</span></div></nav>
   <div id="oLine"></div>
   <div id="oStep">step through ▸</div>
   <div id="nameAsk">
@@ -165,7 +192,9 @@
     <span class="sw" data-t="wc" data-c="#ffb14e" style="background:#ffb14e"></span>
     <span class="sw" data-t="wc" data-c="#c9a0ff" style="background:#c9a0ff"></span>
     <span class="sw" data-t="wc" data-c="#7fe0d0" style="background:#7fe0d0"></span></div>
-  <button id="spClose">CLOSE</button>
+  <div id="spSave"></div>
+  <button id="spClose">RESUME</button>
+  <button id="spQuit">QUIT TO MAIN MENU</button>
 </div></div>
 <div id="taunt"><div class="tt"></div></div>
 <div id="archive"><div class="ar">
@@ -190,12 +219,48 @@ const IMG={
  endWarm:'assets/END_WARM.jpg',endNight:'assets/END_NIGHT.jpg',endCold:'assets/END_COLD.jpg'};
 Object.values(IMG).forEach(s=>{const i=new Image();i.src=s;});
 
+/* ===================== LIVE CHOICE STATS (optional) =====================
+   Paste your Supabase project URL + anon key below to switch on REAL percentages.
+   Leave them empty and the game quietly uses the built-in estimates instead.
+   Setup instructions: see MIRRORS_RELEASE_GUIDE.md                          */
+const STATS_URL='';   // e.g. 'https://abcdefgh.supabase.co'
+const STATS_KEY='';   // your anon/public key
+const STATS_ON=!!(STATS_URL&&STATS_KEY);
+let TALLY=null;
+function statsBump(key){if(!STATS_ON)return;
+  try{fetch(STATS_URL+'/rest/v1/rpc/bump',{method:'POST',
+    headers:{'apikey':STATS_KEY,'Authorization':'Bearer '+STATS_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({k:key})}).catch(()=>{});}catch(e){}}
+function statsFetch(){if(!STATS_ON)return Promise.resolve(null);
+  try{return fetch(STATS_URL+'/rest/v1/tally?select=key,n',{headers:{'apikey':STATS_KEY,'Authorization':'Bearer '+STATS_KEY}})
+    .then(r=>r.ok?r.json():null).then(rows=>{if(!rows)return null;const m={};rows.forEach(r=>m[r.key]=r.n);TALLY=m;return m;}).catch(()=>null);}
+  catch(e){return Promise.resolve(null);}}
+/* real % for one choice, or null if we don't have enough data */
+function livePct(sig,opt){
+  if(!TALLY)return null;
+  let total=0,mine=0;
+  Object.keys(TALLY).forEach(k=>{if(k.indexOf(sig+'|')===0){total+=TALLY[k];if(k===sig+'|'+opt)mine=TALLY[k];}});
+  if(total<25)return null;              // too few players to be meaningful yet
+  return Math.max(1,Math.round(mine/total*100));
+}
+
 /* ===================== PREFS / NAME / SAVE ===================== */
 let NAME='YOU';try{NAME=localStorage.getItem('m_name')||'YOU';}catch(e){}
 let PREFS={mv:1,rv:1,sv:1,font:"Georgia,'Times New Roman',serif",pc:'#7fdcff',wc:'#ff9ecb'};
 try{Object.assign(PREFS,JSON.parse(localStorage.getItem('m_prefs')||'{}'));}catch(e){}
 function savePrefs(){try{localStorage.setItem('m_prefs',JSON.stringify(PREFS));}catch(e){}}
 let curMusicBase=0.35,REC=[],CKPT=null,LOADCK=null,currentHard=false;
+const CKPTNAME={train:'the night train',hideout:'the hideout',sweep:'the sweep',reveal:'the mirror turns'};
+function toast(msg){let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';
+    t.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-12px);z-index:88;'
+     +'font-family:Georgia,serif;font-style:italic;font-size:12px;letter-spacing:2px;color:#bcd2e2;'
+     +'background:rgba(8,10,18,.85);border:1px solid rgba(150,185,205,.28);border-radius:20px;padding:7px 18px;'
+     +'opacity:0;transition:opacity .5s,transform .5s;pointer-events:none';
+    document.body.appendChild(t);}
+  t.textContent='✓ '+msg;
+  requestAnimationFrame(()=>{t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';});
+  clearTimeout(t._h);t._h=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(-12px)';},2600);}
 function saveState(){try{localStorage.setItem('m_save',JSON.stringify({ck:CKPT,S:S,REC:REC,name:NAME}));}catch(e){}}
 function loadState(){try{return JSON.parse(localStorage.getItem('m_save')||'null');}catch(e){return null;}}
 function applyPrefs(){
@@ -211,7 +276,10 @@ function applyPrefs(){
 let paused=false;
 function openSettings(){if(currentHard){taunt();return;}
   paused=true;const sp=document.getElementById('setPanel');sp.style.display='flex';
-  const h=document.getElementById('spHead');if(h)h.textContent='PAUSED';
+  const h=document.getElementById('spHead');if(h)h.textContent=CKPT?'PAUSED':'SETTINGS';
+  const q=document.getElementById('spQuit'),sv=document.getElementById('spSave');
+  if(q)q.style.display=CKPT?'block':'none';
+  if(sv)sv.innerHTML=CKPT?('Progress saved at: <b style="color:#cbb8d6">'+(CKPTNAME[CKPT]||CKPT)+'</b><br>You can pick it up again from “load game”.'):'';
   if(musicEl)musicEl.volume=curMusicBase*PREFS.mv*0.35;
   applyPrefs();}
 function closeSettings(){paused=false;document.getElementById('setPanel').style.display='none';if(musicEl)musicEl.volume=curMusicBase*PREFS.mv;}
@@ -223,6 +291,16 @@ document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
   if(document.getElementById('setPanel').style.display==='flex')closeSettings();else openSettings();});
 document.getElementById('gear').addEventListener('click',openSettings);
 document.getElementById('spClose').addEventListener('click',closeSettings);
+document.getElementById('spQuit').addEventListener('click',()=>{
+  saveState();
+  const q=document.getElementById('spQuit');
+  if(q.dataset.armed!=='1'){q.dataset.armed='1';q.textContent='SURE? YOUR PLACE IS KEPT — CLICK AGAIN';
+    setTimeout(()=>{q.dataset.armed='';q.textContent='QUIT TO MAIN MENU';},4000);return;}
+  const v=document.createElement('div');
+  v.style.cssText='position:fixed;inset:0;background:#04050a;z-index:99;opacity:0;transition:opacity 1.1s';
+  document.body.appendChild(v);requestAnimationFrame(()=>v.style.opacity=1);
+  try{if(musicEl)fadeAudio(musicEl,0,1000);if(rainEl2)fadeAudio(rainEl2,0,1000);}catch(e){}
+  setTimeout(()=>location.reload(),1200);});
 document.getElementById('vMus').addEventListener('input',e=>{PREFS.mv=e.target.value/100;if(musicEl)musicEl.volume=curMusicBase*PREFS.mv;savePrefs();});
 document.getElementById('vRain').addEventListener('input',e=>{PREFS.rv=e.target.value/100;if(rainEl2)rainEl2.volume=(curRainV2>0?curRainV2*0.22:0.16)*PREFS.rv;savePrefs();});
 document.getElementById('vSfx').addEventListener('input',e=>{PREFS.sv=e.target.value/100;savePrefs();});
@@ -275,9 +353,11 @@ function setupFileAudio(){
 }
 /* rain starts as early as the browser allows — before "start game" if possible */
 function startRainEarly(){tryAudio('audio/rain.mp3',a=>{a.loop=true;a.volume=0;rainEl2=a;a.muted=!sndOn;
-  const ok=()=>fadeAudio(a,0.16*PREFS.rv,2000);
-  a.play().then(ok).catch(()=>{const h=()=>{document.removeEventListener('pointerdown',h);document.removeEventListener('keydown',h);a.play().then(ok).catch(()=>{});};
-    document.addEventListener('pointerdown',h);document.addEventListener('keydown',h);});});}
+  a.setAttribute('playsinline','');
+  const ok=()=>fadeAudio(a,0.16*PREFS.rv,2200);
+  const EV=['pointerdown','pointermove','mousemove','keydown','touchstart','wheel','scroll','click'];
+  const arm=()=>{EV.forEach(e=>document.removeEventListener(e,arm,true));a.play().then(ok).catch(()=>{});};
+  a.play().then(ok).catch(()=>{EV.forEach(e=>document.addEventListener(e,arm,true));});});}
 startRainEarly();
 function setRainFile(v){curRainV2=v;if(rainEl2)fadeAudio(rainEl2,v*0.22*PREFS.rv,1600);}
 function stopMusicSoft(){if(musicEl){const old=musicEl;musicEl=null;fadeAudio(old,0,2400);setTimeout(()=>{try{old.pause();}catch(e){}},2500);}fileMusicActive=true;}
@@ -479,7 +559,8 @@ function nx(){if(qi>=queue.length)return;const b=queue[qi++];
   if(b.t==='wait'){setTimeout(nx,b.ms);return;}
   if(b.t==='mir'){mirrorCut(b.lines,()=>nx());return;}
   if(b.t==='card'){showCard(b);return;}
-  if(b.t==='ckpt'){CKPT=b.k;saveState();nx();return;}
+  if(b.t==='ckpt'){CKPT=b.k;saveState();toast('progress saved · '+CKPTNAME[b.k]);
+    const g=document.getElementById('gear');if(g)g.textContent='⏸ pause';nx();return;}
   if(b.t==='dyn'){const r=b.fn(S);queue.splice(qi,0,...(Array.isArray(r)?r:[r]));nx();return;}
   if(b.t==='line'){typeLine(b);return;}
   if(b.t==='choice'){renderChoice(b);return;}}
@@ -505,7 +586,9 @@ function renderChoice(b){awaiting=false;typing=false;hintEl.style.opacity=0;whoE
   const isHard=b.o.some(o=>/Reach for her|Pull her with you|Call her name/.test(o.label||''));
   currentHard=isHard;
   const pick=(o,el)=>{if(done)return;done=true;currentHard=false;
-    REC.push({sig:(b.o[0]&&b.o[0].label)||'',label:o.silence?'(you said nothing)':(o.label||''),warm:o.warm||0,sil:!!o.silence});saveState();
+    const sigK=((b.o[0]&&b.o[0].label)||'').slice(0,28),optK=o.silence?'silence':(o.label||'').slice(0,28);
+    REC.push({sig:(b.o[0]&&b.o[0].label)||'',label:o.silence?'(you said nothing)':(o.label||''),warm:o.warm||0,sil:!!o.silence});
+    statsBump(sigK+'|'+optK);saveState();
     if(timerH){clearInterval(timerH);timerH=null;}document.removeEventListener('keydown',keyH);
     choicesEl.querySelectorAll('.choice').forEach(b2=>b2.style.pointerEvents='none');
     if(el)el.classList.add('chosen');
@@ -583,7 +666,9 @@ const STATS=[
 function buildStatSeq(){const seq=[];
   STATS.forEach(s=>{const r=REC.find(r=>(r.sig||'').indexOf(s.sig)===0||(r.sig||'').includes(s.sig));if(!r)return;
     const hit=s.pc.find(p=>(r.label||'').includes(p[0]));if(!hit)return;
-    seq.push({img:s.img,label:r.label,pct:hit[1],comment:hit[2]});});
+    const sigK=(r.sig||'').slice(0,28),optK=r.sil?'silence':(r.label||'').slice(0,28);
+    const live=livePct(sigK,optK);
+    seq.push({img:s.img,label:r.label,pct:live!==null?live:hit[1],live:live!==null,comment:hit[2]});});
   return seq;}
 /* PULSE — the mirror draws your heartbeat from your choices, then names the pattern. */
 const PATTERNS={
@@ -661,10 +746,33 @@ const TIPS_ANY=['Tell one person this week the thing you assume they already kno
  'Everyone you love is carrying something they have decided not to mention today. Ask about it before it becomes the thing you find out too late.',
  'You will not get a warning. There is no announcement before the last ordinary evening with someone. Behave accordingly, mildly, starting tonight.',
  'The version of them you are irritated by this week is a person who will one day not be reachable. Let that land for four seconds, then go and be kind.',
- 'If you are waiting to be sure before you love someone properly — you will be sure only in hindsight, which is the one place it is no use.'];
-function pickTips(k,n){const pool=TIPS[k].concat(TIPS_ANY).slice();
-  const out=[];n=n||2;
-  while(out.length<n&&pool.length){out.push(pool.splice((Math.random()*pool.length)|0,1)[0]);}
+ 'If you are waiting to be sure before you love someone properly — you will be sure only in hindsight, which is the one place it is no use.',
+ 'Think of the person who would drop everything for you. When did you last make it obvious that you know that about them?',
+ 'Most people are not asking to be understood perfectly. They are asking to not be alone in it for one evening.',
+ 'There is someone whose messages you keep meaning to answer properly. They have noticed. Answer tonight, badly, rather than next week, beautifully.',
+ 'You are allowed to need things. Stating a need is not a burden being placed on someone — it is information they have been guessing at.',
+ 'The relationships that quietly end rarely end in an argument. They end in a series of ordinary evenings where nobody said the true thing.',
+ 'Apologise for the thing you actually did, not the thing that is easier to admit. People can tell the difference, and it is the whole difference.',
+ 'Ask someone about the worst year of their life, and then do not fill the silence afterwards. That is the entire skill.',
+ 'If someone has been kind to you for years without being thanked, they have almost certainly wondered whether you noticed. Tell them you did.',
+ 'Being loved and being *known* are not the same thing. Consider which one you have been offering.',
+ 'You cannot save anyone. You can only refuse to leave, which turns out to be most of it.',
+ 'Whatever you are withholding until they deserve it — affection, forgiveness, praise, the benefit of the doubt — give it this week and see what happens.',
+ 'The people you take for granted are the ones who made themselves easy to take for granted. That was a gift. Treat it like one.',
+ 'Do not let the last thing you said to someone tonight be the version of you that was tired.'];
+/* draw tips the player hasn't seen before; only recycle once everything's been shown */
+function pickTips(k,n){
+  n=n||2;
+  let seen=[];try{seen=JSON.parse(localStorage.getItem('m_seentips')||'[]');}catch(e){}
+  const own=TIPS[k].slice(),any=TIPS_ANY.slice();
+  const pickFrom=(pool)=>{
+    let fresh=pool.filter(t=>seen.indexOf(t)<0);
+    if(!fresh.length)fresh=pool.slice();
+    return fresh[(Math.random()*fresh.length)|0];};
+  const out=[];
+  const first=pickFrom(own);out.push(first);seen.push(first);
+  if(n>1){const second=pickFrom(any.filter(t=>out.indexOf(t)<0));out.push(second);seen.push(second);}
+  try{if(seen.length>60)seen=seen.slice(-40);localStorage.setItem('m_seentips',JSON.stringify(seen));}catch(e){}
   return out;}
 function getTip(k){return pickTips(k,1)[0];}
 /* ===== pulse heartbeat sound (synth, per pattern) ===== */
@@ -772,7 +880,7 @@ function drawPulse(cv,key){
     if(tip&&shown<total){x.fillStyle='#fff';x.shadowColor=CS;x.shadowBlur=18;x.beginPath();x.arc(tip[0],tip[1],3,0,7);x.fill();x.shadowBlur=0;}
     requestAnimationFrame(anim);})();}
 function runResults(){
-  hushRain(3000);
+  hushRain(3000);statsFetch();
   const m=document.getElementById('mirror');m.style.transition='opacity 1.6s';m.style.opacity=0;
   setTimeout(()=>{m.style.display='none';mirrorOn=false;},1600);
   document.getElementById('cap').style.display='none';
@@ -782,7 +890,8 @@ function runResults(){
     if(i<seq.length){const s=seq[i++];try{setBG(s.img,false);}catch(e){}
       ct.innerHTML='<div style="font-size:11px;letter-spacing:4px;color:#8f81a0;margin-bottom:14px">WHAT YOU CHOSE</div>'
        +'<div style="font-size:19px;margin-bottom:12px">“'+s.label+'”</div>'
-       +'<div style="font-size:15px;color:#9fd8ea;font-style:normal;margin-bottom:14px">'+s.pct+'% of players chose this too.</div>'
+       +'<div style="font-size:15px;color:#9fd8ea;font-style:normal;margin-bottom:14px">'+s.pct+'% of players chose this too.'
+         +(s.live?'<span style="font-size:9px;letter-spacing:2px;color:#6e6280"> &nbsp;· LIVE</span>':'')+'</div>'
        +'<div style="font-size:15.5px;color:#c3b4cf">'+s.comment+'</div>'
        +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:20px">CLICK ▸</div>';
       c.style.display='flex';requestAnimationFrame(()=>{void c.offsetWidth;c.style.opacity=1;});
@@ -839,7 +948,7 @@ function showShelf(p){
   let cards='';
   PORDER.forEach(k=>{const t=PATTERNS[k],has=got.indexOf(k)>=0,isNew=(k===p.key);
     cards+='<div style="width:150px;padding:10px 9px;border-radius:10px;border:1px solid '+(has?(isNew?'#ffb14e':'rgba(255,255,255,.2)'):'rgba(255,255,255,.07)')+';background:'+(has?'rgba(255,255,255,.05)':'rgba(255,255,255,.015)')+';text-align:center">'
-     +'<canvas class="shcv" data-k="'+k+'" width="260" height="70" style="width:100%;height:36px;border-radius:6px;background:rgba(8,6,14,.7);margin-bottom:7px;'+(has?'':'opacity:.22;filter:grayscale(1)')+'"></canvas>'
+     +'<canvas class="shcv" data-k="'+(has?k:'LOCKED')+'" width="260" height="70" style="width:100%;height:36px;border-radius:6px;background:rgba(8,6,14,.7);margin-bottom:7px;'+(has?'':'opacity:.22;filter:grayscale(1)')+'"></canvas>'
      +'<div style="font-size:10.5px;letter-spacing:1px;color:'+(has?PCOL[k][0]:'#4c4458')+';font-style:normal;line-height:1.4">'+(has?t[0].replace('THE ',''):'? ? ?')+'</div>'
      +(isNew?'<div style="font-size:8px;letter-spacing:2px;color:#ffb14e;margin-top:5px;font-style:normal">NEW</div>':'')
      +'</div>';});
@@ -854,13 +963,13 @@ function showShelf(p){
 /* a small idealised heartbeat per pattern, for the archive rows */
 function drawMiniPulse(cv,key){
   const x=cv.getContext('2d'),W=cv.width,H=cv.height,mid=H*0.56;
-  const shapes={RUN:[1,1,1,1],BREATH:[0.95,0.25,1,0.9],HES:[0.5,0.85,0.4,0.9],COUNT:[0.5,0.28,0.55,0.28],FLAT:[0.32,0.32,0.32,0.32],MISS:[0.6,0.12,0.1,0.5]};
+  const shapes={RUN:[1,1,1,1],BREATH:[0.95,0.25,1,0.9],HES:[0.5,0.85,0.4,0.9],COUNT:[0.5,0.28,0.55,0.28],FLAT:[0.32,0.32,0.32,0.32],MISS:[0.6,0.12,0.1,0.5],LOCKED:[0,0,0,0]};
   const b=shapes[key]||[0.6,0.6,0.6,0.6],pts=[[0,mid]];let px=W*0.06;const st=W*0.22;
   b.forEach(v=>{if(v===0){pts.push([px+st*0.8,mid]);px+=st;return;}
     pts.push([px,mid]);pts.push([px+st*0.14,mid-3*v]);pts.push([px+st*0.28,mid+H*0.12*v]);
     pts.push([px+st*0.4,mid-H*0.36*v]);pts.push([px+st*0.52,mid+H*0.15*v]);pts.push([px+st*0.66,mid]);px+=st;});
   pts.push([W,mid]);
-  let prog=0;const total=pts.length,mc=PCOL[key]||PCOL.RUN;
+  let prog=0;const total=pts.length,mc=PCOL[key]||['#4c4458','rgba(76,68,88,'];
   if(cv._stop)cv._stop();let alive=true;cv._stop=()=>{alive=false;};
   (function anim(){if(!alive)return;prog+=0.5;if(prog>total+20)prog=0;
     const shown=Math.min(total,Math.floor(prog));x.clearRect(0,0,W,H);
@@ -890,20 +999,23 @@ function openArchive(){
   } else fh.style.display='none';
   list.innerHTML='';
   PORDER.forEach(k=>{const t=PATTERNS[k],has=got.indexOf(k)>=0;
-    const row=document.createElement('div');row.className='arow'+(has?'':' lock');row.style.cursor='pointer';
+    const row=document.createElement('div');row.className='arow'+(has?'':' lock');row.style.cursor=has?'pointer':'default';
     const cv=document.createElement('canvas');cv.width=300;cv.height=88;
     const tx=document.createElement('div');tx.style.flex='1';
     tx.innerHTML='<div class="an"'+(has?' style="color:'+PCOL[k][0]+'"':'')+'>'+(has?t[0]:'? ? ? ? ?')+'</div><div class="at">'+(has?t[1]:'not yet lived')+'</div>'
       +(first&&first.k===k?'<div style="font-size:9px;letter-spacing:3px;color:#ffb14e;margin-top:4px;font-style:normal">★ YOUR FIRST</div>':'')
       +(last===k&&(!first||first.k!==k)?'<div style="font-size:9px;letter-spacing:3px;color:#9fb8c8;margin-top:4px;font-style:normal">◂ MOST RECENT</div>':'')
-      +'<div class="apl" style="font-size:10px;letter-spacing:2px;color:#6e6280;margin-top:4px;font-style:normal">'+(has?'♥ CLICK TO LISTEN &nbsp;·&nbsp; ⤢ VIEW':'♥ CLICK TO LISTEN')+'</div>';
+      +'<div class="apl" style="font-size:10px;letter-spacing:2px;color:#6e6280;margin-top:4px;font-style:normal">'+(has?'♥ CLICK TO LISTEN &nbsp;·&nbsp; ⤢ VIEW':'🔒 LOCKED — LIVE THIS ONE TO HEAR IT')+'</div>';
     if(has){const vb=document.createElement('button');vb.className='fbtn';vb.textContent='⤢';
       vb.style.cssText='flex:none;font-size:13px;padding:6px 10px;color:'+PCOL[k][0];
       vb.onclick=e=>{e.stopPropagation();stopPulseSound();cameFromArchive=true;closeArchive();setTimeout(()=>previewPulse(k),450);};
       row.appendChild(vb);}
     row.insertBefore(cv,row.firstChild);row.insertBefore(tx,row.children[1]);list.appendChild(row);
-    drawMiniPulse(cv,k);
-    row.onclick=()=>{const playing=row.classList.contains('playing');
+    drawMiniPulse(cv,has?k:'LOCKED');
+    row.onclick=()=>{
+      if(!has){const p=tx.querySelector('.apl');p.textContent='🔒 THE MIRROR HAS NOT HEARD THIS HEART FROM YOU YET';p.style.color='#8a7f98';
+        setTimeout(()=>{p.textContent='🔒 LOCKED — LIVE THIS ONE TO HEAR IT';p.style.color='#6e6280';},2200);return;}
+      const playing=row.classList.contains('playing');
       list.querySelectorAll('.arow').forEach(r=>{r.classList.remove('playing');const p=r.querySelector('.apl');if(p){p.textContent='♥ CLICK TO LISTEN';p.style.color='#6e6280';}});
       if(playing){stopPulseSound();return;}
       startPulseSound(k);row.classList.add('playing');
@@ -919,13 +1031,28 @@ function theEnd(){const c=document.getElementById('card');c.style.display='none'
   window._ended=true;
   try{localStorage.removeItem('m_save');}catch(e){}stopPulseSound();
   const d=document.createElement('div');
-  d.style.cssText='position:fixed;inset:0;background:#020204;z-index:80;display:flex;flex-direction:column;gap:26px;align-items:center;justify-content:center;opacity:0;transition:opacity 2.5s';
+  d.style.cssText='position:fixed;inset:0;background:#020204;z-index:80;display:flex;flex-direction:column;gap:22px;align-items:center;justify-content:center;opacity:0;transition:opacity 2.5s';
   d.innerHTML='<div style="font-style:italic;letter-spacing:6px;font-size:15px;color:#8fa8b8">the end</div>'
-   +'<div style="display:flex;gap:12px;opacity:0;transition:opacity 1.6s" id="endBtns">'
-   +'<button class="fbtn" id="endArch">pulse archive</button>'
-   +'<button class="fbtn" id="endAgain">be someone else</button></div>';
+   /* one fixed slot: the message and the neon cross-fade inside it, so nothing ever moves */
+   +'<div style="position:relative;width:100%;height:210px;display:flex;align-items:center;justify-content:center">'
+     +'<div id="endMsg" style="position:absolute;opacity:0;transition:opacity 4s;font-style:italic;font-size:clamp(18px,2.5vw,25px);'
+     +'color:#ffe9f2;text-align:center;padding:0 8vw;line-height:2;text-shadow:0 0 26px rgba(255,158,203,.35)">'
+     +'Whoever you are, on the other side of the glass —<br><span id="endMsg2" style="opacity:0;transition:opacity 4s">you deserve more than you think you do.</span></div>'
+     +'<div id="endBtns" style="position:absolute;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;opacity:0;transition:opacity 2.4s">'
+       +'<button class="endb" id="endArch">pulse archive</button>'
+       +'<button class="endb pink" id="endAgain">be someone else</button></div>'
+   +'</div>'
+   +'<div id="endTease" style="opacity:0;transition:opacity 3.5s;font-style:italic;font-size:12.5px;letter-spacing:1px;'
+   +'color:#6f6485;text-align:center;line-height:1.9;max-width:520px;padding:0 8vw;margin-top:-40px">'
+   +'The mirror does not close.<br><span style="color:#8a7f9e">Come back another night — there are other people in here,<br>and none of them are hers.</span></div>';
   document.body.appendChild(d);requestAnimationFrame(()=>d.style.opacity=1);fadeOutAll();
-  setTimeout(()=>{const b=document.getElementById('endBtns');if(b)b.style.opacity=1;},3200);
+  setTimeout(()=>{const m=document.getElementById('endMsg');if(m)m.style.opacity=1;},3400);
+  setTimeout(()=>{const m=document.getElementById('endMsg2');if(m)m.style.opacity=1;},7600);
+  /* the message dissolves, leaving only the choice */
+  /* the message dissolves and collapses out of the layout, so the neon sits close under "the end" */
+  setTimeout(()=>{const m=document.getElementById('endMsg');if(m){m.style.transition='opacity 4.5s';m.style.opacity=0;}},11500);
+  setTimeout(()=>{const b=document.getElementById('endBtns');if(b)b.style.opacity=1;},14800);
+  setTimeout(()=>{const t=document.getElementById('endTease');if(t)t.style.opacity=1;},18500);
   d.querySelector('#endArch').onclick=openArchive;
   d.querySelector('#endAgain').onclick=()=>location.reload();}
 
@@ -1371,27 +1498,37 @@ let loadT=performance.now();
       'Whatever you choose, I am still here at the end. I am always at the end.']);}
   var q=[],mtok=0;function shf(a){for(var i=a.length-1;i>0;i--){var j=(Math.random()*(i+1))|0,s=a[i];a[i]=a[j];a[j]=s;}return a;}
   function murmur(){var my=mtok;if(q.length===0)q=shf(buildLines());var txt=q.shift();line.style.opacity=0;setTimeout(function(){if(my!==mtok)return;line.textContent=txt;line.style.opacity=1;setTimeout(function(){if(my===mtok)murmur();},4800);},900);}
+  /* on touch: start mirrored, then right themselves once so they can be read */
+  try{if(window.matchMedia&&window.matchMedia('(hover:none),(pointer:coarse)').matches){
+    var mn0=document.getElementById('oMenu');if(mn0){mn0.classList.add('mirrored');
+      setTimeout(function(){mn0.classList.remove('mirrored');},2400);}}}catch(e){}
   try{if(getCollected().length>0){const ar=document.getElementById('oArch');ar.style.display='block';
     let seenArch=false;try{seenArch=!!localStorage.getItem('m_archseen');}catch(e){}
-    if(!seenArch){ar.classList.add('fresh');ar.textContent='pulse archive ✦';
+    if(!seenArch){ar.classList.add('fresh');const sp=ar.querySelector('.omt');if(sp)sp.textContent='pulse archive ✦';
       ar.addEventListener('click',()=>{try{localStorage.setItem('m_archseen','1');}catch(e){}
-        ar.classList.remove('fresh');ar.textContent='pulse archive';},{once:true});}
+        ar.classList.remove('fresh');if(sp)sp.textContent='pulse archive';},{once:true});}
   }}catch(e){}
   var nameAsk=document.getElementById('nameAsk'),nameIn=document.getElementById('nameIn'),nameGo=document.getElementById('nameGo');
-  function afterName(){nameAsk.style.opacity=0;setTimeout(function(){nameAsk.style.display='none';},1000);mtok++;murmur();step.style.opacity=1;}
+  function afterName(){nameAsk.style.opacity=0;setTimeout(function(){nameAsk.style.display='none';},1000);mtok++;murmur();setTimeout(function(){step.style.opacity=1;},9000);}
   function submitName(){var v=(nameIn.value||'').trim();if(v){NAME=v;try{localStorage.setItem('m_name',v);}catch(e){}}afterName();}
   function begin(skipName){if(story)return;story=true;zoomT=0;menu.style.opacity=0;try{initAudio();setupFileAudio();drone();startScore();}catch(e){}
     setTimeout(function(){
-      if(skipName===true){mtok++;murmur();step.style.opacity=1;return;}
+      if(skipName===true){mtok++;murmur();setTimeout(function(){step.style.opacity=1;},9000);return;}
       nameAsk.style.display='flex';requestAnimationFrame(function(){nameAsk.style.opacity=1;});
       try{nameIn.focus();}catch(e){}
     },2700);}
   function enter(){if(dead)return;dead=true;mtok++;try{playMusic('music');}catch(e){}wrap.style.opacity=0;setTimeout(function(){wrap.style.display='none';startStory();},1600);}
   document.getElementById('oStart').addEventListener('click',function(){LOADCK=null;begin(false);});
   document.getElementById('oLoad').addEventListener('click',function(){
+    if(story)return;
     var sv=loadState();
-    if(!sv||!sv.ck){mtok++;line.textContent='There is nothing to load. Yet.';line.style.opacity=1;setTimeout(function(){line.style.opacity=0;},2600);return;}
-    NAME=sv.name||NAME;try{Object.assign(S,sv.S||{});}catch(e){}REC=sv.REC||[];LOADCK=sv.ck;begin(true);});
+    if(!sv||!sv.ck){mtok++;line.textContent='There is nothing to load. You have not left anything behind yet.';line.style.opacity=1;
+      setTimeout(function(){line.style.opacity=0;},3200);return;}
+    NAME=sv.name||NAME;try{Object.assign(S,sv.S||{});}catch(e){}REC=sv.REC||[];LOADCK=sv.ck;
+    toast('resuming · '+(CKPTNAME[sv.ck]||sv.ck));
+    mtok++;line.textContent='I kept your place. '+(CKPTNAME[sv.ck]||sv.ck)+'.';line.style.opacity=1;
+    begin(true);
+    setTimeout(function(){enter();},3400);});
   document.getElementById('oSet').addEventListener('click',function(){document.getElementById('setPanel').style.display='flex';applyPrefs();});
   nameGo.addEventListener('click',submitName);
   nameIn.addEventListener('keydown',function(e){if(e.key==='Enter'){e.stopPropagation();submitName();}});
