@@ -224,8 +224,8 @@ Object.values(IMG).forEach(s=>{const i=new Image();i.src=s;});
    Paste your Supabase project URL + anon key below to switch on REAL percentages.
    Leave them empty and the game quietly uses the built-in estimates instead.
    Setup instructions: see MIRRORS_RELEASE_GUIDE.md                          */
-const STATS_URL='';   // e.g. 'https://abcdefgh.supabase.co'
-const STATS_KEY='';   // your anon/public key
+const STATS_URL='https://lgqcsglxpgtnpacjxdkd.supabase.co';   // your Supabase project
+const STATS_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxncWNzZ2x4cGd0bnBhY2p4ZGtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTQ3NDYsImV4cCI6MjEwNDA5MDc0Nn0.mIX8-tgQm4bh48WaU0glV-pqSlN-reKVay5-XrCbVm8';   // anon / public key — safe to publish
 const STATS_ON=!!(STATS_URL&&STATS_KEY);
 let TALLY=null;
 function statsBump(key){if(!STATS_ON)return;
