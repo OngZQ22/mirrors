@@ -236,13 +236,21 @@ function statsFetch(){if(!STATS_ON)return Promise.resolve(null);
   try{return fetch(STATS_URL+'/rest/v1/tally?select=key,n',{headers:{'apikey':STATS_KEY,'Authorization':'Bearer '+STATS_KEY}})
     .then(r=>r.ok?r.json():null).then(rows=>{if(!rows)return null;const m={};rows.forEach(r=>m[r.key]=r.n);TALLY=m;return m;}).catch(()=>null);}
   catch(e){return Promise.resolve(null);}}
-/* real % for one choice, or null if we don't have enough data */
-function livePct(sig,opt){
+/* what the world actually did with this choice */
+function liveStat(sig,opt){
   if(!TALLY)return null;
   let total=0,mine=0;
   Object.keys(TALLY).forEach(k=>{if(k.indexOf(sig+'|')===0){total+=TALLY[k];if(k===sig+'|'+opt)mine=TALLY[k];}});
-  if(total<25)return null;              // too few players to be meaningful yet
-  return Math.max(1,Math.round(mine/total*100));
+  if(!total)return null;
+  return {mine:mine,total:total,pct:Math.max(1,Math.round(mine/total*100))};
+}
+/* honest wording at any sample size */
+function liveLine(st){
+  if(!st)return null;
+  if(st.total>=25)return st.pct+'% of players chose this too.';
+  if(st.mine<=1)return 'You are the first person to choose this.';
+  if(st.mine===2)return 'One other person has ever chosen this.';
+  return (st.mine-1)+' other people have chosen this.';
 }
 
 /* ===================== PREFS / NAME / SAVE ===================== */
@@ -738,8 +746,11 @@ function buildStatSeq(){const seq=[];
   STATS.forEach(s=>{const r=REC.find(r=>(r.sig||'').indexOf(s.sig)===0||(r.sig||'').includes(s.sig));if(!r)return;
     const hit=s.pc.find(p=>(r.label||'').includes(p[0]));if(!hit)return;
     const sigK=(r.sig||'').slice(0,28),optK=r.sil?'silence':(r.label||'').slice(0,28);
-    const live=livePct(sigK,optK);
-    seq.push({img:s.img,label:r.label,pct:live!==null?live:hit[1],live:live!==null,comment:hit[2]});});
+    const st=liveStat(sigK,optK),line=liveLine(st);
+    seq.push({img:s.img,
+      text: line || (hit[1]+'% of players chose this too.'),
+      live: !!line,
+      comment:hit[2],label:r.label});});
   return seq;}
 /* PULSE — the mirror draws your heartbeat from your choices, then names the pattern. */
 const PATTERNS={
@@ -976,7 +987,7 @@ function runResults(){
     if(i<seq.length){const s=seq[i++];try{setBG(s.img,false);}catch(e){}
       ct.innerHTML='<div style="font-size:11px;letter-spacing:4px;color:#8f81a0;margin-bottom:14px">WHAT YOU CHOSE</div>'
        +'<div style="font-size:19px;margin-bottom:12px">“'+s.label+'”</div>'
-       +'<div style="font-size:15px;color:#9fd8ea;font-style:normal;margin-bottom:14px">'+s.pct+'% of players chose this too.'
+       +'<div style="font-size:15px;color:#9fd8ea;font-style:normal;margin-bottom:14px">'+s.text
          +(s.live?'<span style="font-size:9px;letter-spacing:2px;color:#6e6280"> &nbsp;· LIVE</span>':'')+'</div>'
        +'<div style="font-size:15.5px;color:#c3b4cf">'+s.comment+'</div>'
        +'<div style="font-size:9px;letter-spacing:3px;color:#6e6280;margin-top:20px">CLICK ▸</div>';
